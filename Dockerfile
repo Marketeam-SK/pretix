@@ -5,6 +5,7 @@ RUN apt-get update && \
             build-essential \
             gettext \
             git \
+            gosu \
             libffi-dev \
             libjpeg-dev \
             libmemcached-dev \
@@ -68,8 +69,11 @@ RUN chmod +x /usr/local/bin/pretix && \
     chown -R pretixuser:pretixuser /pretix /data data &&  \
     sudo -u pretixuser make production
 
-USER pretixuser
+
 # VOLUME ["/etc/pretix", "/data"]
+COPY deployment/docker/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 EXPOSE 80
-ENTRYPOINT ["pretix"]
+ENTRYPOINT ["/entrypoint.sh", "pretix"]
 CMD ["all"]
+
