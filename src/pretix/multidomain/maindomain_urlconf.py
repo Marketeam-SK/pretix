@@ -48,7 +48,7 @@ presale_patterns_main = [
     re_path(r'', include((locale_patterns + [
         re_path(r'^(?P<organizer>[^/]+)/', include(organizer_patterns)),
         re_path(r'^(?P<organizer>[^/]+)/(?P<event>[^/]+)/', include(event_patterns)),
-        re_path(r'^$', TemplateView.as_view(template_name='pretixpresale/index.html'), name="index")
+        re_path(r'^$', lambda request: __import__('django.shortcuts').shortcuts.redirect('/control/'), name="index")
     ], 'presale')))
 ]
 
