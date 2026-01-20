@@ -776,8 +776,8 @@ msgstr "powered by {name} na základe <a {a_attr}>pretix</a>"
 
 #: pretix/base/context.py:55
 #, python-format
-msgid "<a %(a_attr)s>ticketing powered by pretix</a>"
-msgstr "<a %(a_attr)s>predaj vstupeniek poháňaný systémom pretix</a>"
+msgid "<a>Ticketing</a>"
+msgstr "<a></a>"
 
 #: pretix/base/context.py:64
 msgid "source code"
@@ -829,7 +829,7 @@ msgstr ""
 msgid ""
 "Field \"{field_name}\" does not exist. Please check your {provider_name} "
 "settings."
-msgstr ""
+msgstr "Políčko \"{field_name}\" neexistuje. Prosím skontrolujte vaše {provider_name} nastavenia."
 
 #: pretix/base/datasync/datasync.py:271
 #, python-brace-format

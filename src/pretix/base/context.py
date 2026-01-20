@@ -52,7 +52,7 @@ def get_powered_by(request, safelink=True):
                 )
             )
     else:
-        msg = gettext('<a %(a_attr)s>ticketing powered by pretix</a>') % {
+        msg = gettext('<a></a>') % {
             'a_attr': 'href="{}" target="_blank" rel="noopener"'.format(
                 sl('https://pretix.eu') if safelink else 'https://pretix.eu',
             )
