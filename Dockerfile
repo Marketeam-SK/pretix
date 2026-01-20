@@ -5,6 +5,7 @@ RUN apt-get update && \
             build-essential \
             gettext \
             git \
+            gosu \
             libffi-dev \
             libjpeg-dev \
             libmemcached-dev \
@@ -70,6 +71,8 @@ RUN chmod +x /usr/local/bin/pretix && \
 
 USER pretixuser
 # VOLUME ["/etc/pretix", "/data"]
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 EXPOSE 80
-ENTRYPOINT ["pretix"]
+ENTRYPOINT ["/entrypoint.sh", "pretix"]
 CMD ["all"]
