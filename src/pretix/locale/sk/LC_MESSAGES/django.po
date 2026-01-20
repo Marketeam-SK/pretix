@@ -15349,6 +15349,8 @@ msgid ""
 "Products in this category are regular products, but are only shown in the "
 "cross-selling step, according to the configuration below."
 msgstr ""
+"Produkty v tejto kategórii sú bežné produkty, ale zobrazujú sa iba "
+"v kroku krížového predaja podľa nižšie uvedenej konfigurácie."
 
 #: pretix/control/forms/item.py:112
 msgid ""
@@ -35889,7 +35891,7 @@ msgstr ""
 
 #: pretix/presale/templates/pretixpresale/giftcard/checkout.html:10
 msgid "The following gift cards are available in your customer account:"
-msgstr ""
+msgstr "Nasledujúce darčekové poukážky sú dostupné vo Vašom zákazníckom účte:"
 
 #: pretix/presale/templates/pretixpresale/giftcard/checkout.html:24
 #, fuzzy

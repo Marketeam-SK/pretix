@@ -770,8 +770,8 @@ msgid "<a %(a_attr)s>ticketing powered by pretix</a>"
 msgstr "<a %(a_attr)s>ticket system postavený na systému pretix</a>"
 
 #: pretix/base/context.py:64
-msgid "source code"
-msgstr "zdrojový kód"
+msgid ""
+msgstr ""
 
 #: pretix/base/customersso/oidc.py:61
 #, python-brace-format
@@ -13187,8 +13187,8 @@ msgid "Proceed to %(host)s"
 msgstr "Pokračovat na %(host)s"
 
 #: pretix/base/templates/source.html:5 pretix/base/templates/source.html:9
-msgid "Source code"
-msgstr "Zdrojový kód"
+msgid ""
+msgstr ""
 
 #: pretix/base/templates/source.html:10
 msgid ""
