@@ -69,10 +69,11 @@ RUN chmod +x /usr/local/bin/pretix && \
     chown -R pretixuser:pretixuser /pretix /data data &&  \
     sudo -u pretixuser make production
 
-USER pretixuser
+
 # VOLUME ["/etc/pretix", "/data"]
-COPY entrypoint.sh /entrypoint.sh
+COPY deployment/docker/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 EXPOSE 80
 ENTRYPOINT ["/entrypoint.sh", "pretix"]
 CMD ["all"]
+
