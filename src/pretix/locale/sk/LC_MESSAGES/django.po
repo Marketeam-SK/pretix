@@ -1395,6 +1395,8 @@ msgstr "Externý identifikátor"
 msgid "Phone number"
 msgstr "Telefónne číslo"
 
+msgid "Please bookmark or save the link to this exact page if you want to access your order later. We also sent you an email to the address you specified containing the link to this page."
+msgstr "Prosím, pridajte si odkaz na túto stránku medzi záložky alebo si ho uložte, ak sa chcete k svojej objednávke neskôr vrátiť. Na zadanú e-mailovú adresu sme vám tiež poslali správu s odkazom na túto stránku."
 #: pretix/base/exporters/customers.py:69 pretix/base/models/auth.py:249
 #: pretix/base/models/customers.py:104 pretix/base/models/orders.py:3393
 #: pretix/base/settings.py:3802 pretix/base/settings.py:3814
@@ -35075,9 +35077,9 @@ msgstr ""
 #| "your order later. We also sent you an email containing the link to the "
 #| "address you specified."
 msgid ""
-"Please bookmark or save the link to this exact page if you want to access "
-"your order later. We also sent you an email to the address you specified "
-"containing the link to this page."
+"Ak chcete neskôr získať prístup k svojej objednávke, uložte si "
+"odkaz na túto konkrétnu stránku do záložiek alebo ju vytvorte. "
+"Na vami zadanú adresu sme vám tiež poslali mail s odkazom na túto stránku."
 msgstr ""
 "Ak chcete neskôr získať prístup k svojej objednávke, uložte si "
 "odkaz na túto konkrétnu stránku do záložiek alebo ju vytvorte. "

@@ -5,7 +5,7 @@ export DATA_DIR=/data/
 export HOME=/pretix
 
 AUTOMIGRATE=${AUTOMIGRATE:-yes}
-NUM_WORKERS_DEFAULT=4
+NUM_WORKERS_DEFAULT=2
 export NUM_WORKERS=${NUM_WORKERS:-$NUM_WORKERS_DEFAULT}
 
 if [ ! -d /data/logs ]; then
