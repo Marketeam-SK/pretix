@@ -35079,8 +35079,9 @@ msgid ""
 "your order later. We also sent you an email to the address you specified "
 "containing the link to this page."
 msgstr ""
-"Ak sa chcete k objednávke dostať neskôr, uložte si odkaz na túto stránku. "
-"Odkaz sme Vám poslali aj e-mailom."
+„Ak chcete neskôr získať prístup k svojej objednávke, uložte si "
+"odkaz na túto konkrétnu stránku do záložiek alebo ju vytvorte. "
+"Na vami zadanú adresu sme vám tiež poslali mail s odkazom na túto stránku."
 
 #: pretix/presale/templates/pretixpresale/event/order.html:60
 #, fuzzy
@@ -36258,6 +36259,8 @@ msgid ""
 "Your cart timeout was extended. Please note that some of the prices in your "
 "cart changed."
 msgstr ""
+"Časový limit vášho košíka bol predĺžený. Upozorňujeme, že niektoré ceny vo vašom košíku sa zmenili."
+
 
 #: pretix/presale/views/cart.py:573
 #, fuzzy
