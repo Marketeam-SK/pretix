@@ -33,36 +33,19 @@ from pretix.base.templatetags.safelink import safelink as sl
 def get_powered_by(request, safelink=True):
     gs = GlobalSettingsObject()
     d = gs.settings.license_check_input
-    if d.get('poweredby_name'):
-        if d.get('poweredby_url'):
-            msg = gettext('<a {a_name_attr}>powered by {name}</a> <a {a_attr}>based on pretix</a>').format(
-                name=d['poweredby_name'],
-                a_name_attr='href="{}" target="_blank" rel="noopener"'.format(
-                    sl(d['poweredby_url']) if safelink else d['poweredby_url'],
-                ),
-                a_attr='href="{}" target="_blank" rel="noopener"'.format(
-                    sl('https://pretix.eu') if safelink else 'https://pretix.eu',
-                )
-            )
-        else:
-            msg = gettext('<a {a_attr}>powered by {name} based on pretix</a>').format(
-                name=d['poweredby_name'],
-                a_attr='href="{}" target="_blank" rel="noopener"'.format(
-                    sl('https://pretix.eu') if safelink else 'https://pretix.eu',
-                )
-            )
-    else:
-        msg = gettext('<a></a>') % {
-            'a_attr': 'href="{}" target="_blank" rel="noopener"'.format(
-                sl('https://pretix.eu') if safelink else 'https://pretix.eu',
-            )
-        }
-
-    if d.get('base_license') == 'agpl':
-        msg += ' (<a href="{}" target="_blank" rel="noopener">{}</a>)'.format(
-            request.build_absolute_uri(reverse('source')),
-            gettext('source code')
+    
+    # Custom powered by for Marketeam
+    msg = gettext('<a {a_attr}>powered by Marketeam and pretix</a>').format(
+        a_attr='href="{}" target="_blank" rel="noopener"'.format(
+            sl('https://pretix.eu') if safelink else 'https://pretix.eu',
         )
+    )
+
+    # Always show source code link pointing to Marketeam GitHub
+    msg += ' (<a href="{}" target="_blank" rel="noopener">{}</a>)'.format(
+        'https://github.com/Marketeam-SK/pretix',
+        gettext('source code')
+    )
 
     return mark_safe(msg)
 
