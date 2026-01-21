@@ -35079,7 +35079,7 @@ msgid ""
 "your order later. We also sent you an email to the address you specified "
 "containing the link to this page."
 msgstr ""
-„Ak chcete neskôr získať prístup k svojej objednávke, uložte si "
+"Ak chcete neskôr získať prístup k svojej objednávke, uložte si "
 "odkaz na túto konkrétnu stránku do záložiek alebo ju vytvorte. "
 "Na vami zadanú adresu sme vám tiež poslali mail s odkazom na túto stránku."
 
