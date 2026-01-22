@@ -195,6 +195,15 @@ article.item-with-variations .product-row:last-child:after {
 }
 div.front-page {
     margin-top: 30px;
+    margin-bottom: 50px;
+}
+
+details.panel,
+div.panel {
+    &.panel-default,
+    &.panel-primary {
+        margin-top: 50px;
+    }
 }
 .offline-banner {
     background: $brand-danger;
