@@ -48,9 +48,10 @@
         </script>
     {% endautoescape %}
 
-    {# Zobraz názov podujatia a text titulnej stránky na vrchu #}
-    {% if request.event.has_subevents %}
-        {% if not subevent %}
+    {# 1. Najprv zobraz detail eventu, výber lístka a tlačidlo #}
+    {% if subevent or not event.has_subevents %}
+        {# Zobraz názov podujatia a text titulnej stránky pre daný dátum #}
+        {% if subevent %}
             {% if event_logo and event_logo_show_title %}
                 <h2 class="content-header">
                     {{ event.name }}
@@ -62,10 +63,7 @@
                 </div>
             {% endif %}
         {% endif %}
-    {% endif %}
-
-    {# 1. Najprv zobraz detail eventu, výber lístka a tlačidlo #}
-    {% if subevent or not event.has_subevents %}
+        
         {% if not cart_namespace or subevent %}
             <div{% if request.event.is_remote%} class="event-is-remote"{% endif %}>
                 {% include "pretixpresale/event/fragment_event_info.html" with event=request.event subevent=subevent ev=ev show_location=True %}
