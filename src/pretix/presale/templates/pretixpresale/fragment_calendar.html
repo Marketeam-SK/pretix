@@ -62,7 +62,8 @@
         soon
     {% endif %}
 {% endspaceless %}"
-                                       href="{{ event.url }}">
+                                       href="{{ event.url }}"
+                                       {% if event.event.color %}style="background-color: {{ event.event.color }}; border-color: {{ event.event.color }};"{% endif %}>
                                         {% if show_names|default_if_none:True %}
                                             <span class="event-name">
                                                 {{ event.event.name }}

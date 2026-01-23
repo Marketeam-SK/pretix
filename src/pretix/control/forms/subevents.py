@@ -71,6 +71,7 @@ class SubEventForm(I18nModelForm):
             'comment',
             'geo_lat',
             'geo_lon',
+            'color',
         ]
         field_classes = {
             'date_from': SplitDateTimeField,
@@ -85,6 +86,7 @@ class SubEventForm(I18nModelForm):
             'date_admission': SplitDateTimePickerWidget(attrs={'data-date-after': '#id_date_from_0'}),
             'presale_start': SplitDateTimePickerWidget(),
             'presale_end': SplitDateTimePickerWidget(attrs={'data-date-after': '#id_presale_start_0'}),
+            'color': forms.TextInput(attrs={'type': 'color'}),
         }
 
 
@@ -135,7 +137,7 @@ class SubEventBulkEditForm(I18nModelForm):
                 self.fields[k].widget.attrs['placeholder'] = '[{}]'.format(_('Selection contains various values'))
             self.fields[k].one_required = False
 
-        for k in ('geo_lat', 'geo_lon', 'comment'):
+        for k in ('geo_lat', 'geo_lon', 'comment', 'color'):
             # scalar fields
             if k in self.mixed_values:
                 self.fields[k].widget.attrs['placeholder'] = '[{}]'.format(_('Selection contains various values'))
@@ -168,10 +170,12 @@ class SubEventBulkEditForm(I18nModelForm):
             'geo_lon',
             'is_public',
             'active',
+            'color',
         ]
         field_classes = {
         }
         widgets = {
+            'color': forms.TextInput(attrs={'type': 'color'}),
         }
 
     def clean(self):

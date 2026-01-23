@@ -1572,6 +1572,18 @@ class SubEvent(EventMixin, LoggedModel):
     )
     seating_plan = models.ForeignKey('SeatingPlan', on_delete=models.PROTECT, null=True, blank=True,
                                      related_name='subevents', verbose_name=_('Seating plan'))
+    color = models.CharField(
+        max_length=7,
+        null=True, blank=True,
+        verbose_name=_("Calendar color"),
+        help_text=_("Hex color code for displaying this date in the calendar (e.g., #FF5733)"),
+        validators=[
+            RegexValidator(
+                regex="^#[0-9A-Fa-f]{6}$",
+                message=_("Please enter a valid hex color code (e.g., #FF5733)"),
+            ),
+        ]
+    )
 
     comment = models.TextField(
         verbose_name=_("Internal comment"),
