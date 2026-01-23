@@ -50,7 +50,7 @@
 
     {# 1. Najprv zobraz košík - otvorený len po pridaní do košíka #}
     {% if show_cart %}
-        {% include "pretixpresale/event/fragment_cart_box.html" with open=True %}
+        {% include "pretixpresale/event/fragment_cart_box.html" with open=request.GET.show_cart %}
     {% endif %}
 
     {# 2. Potom zobraz kalendár/zoznam podujatí #}

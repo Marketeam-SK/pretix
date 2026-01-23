@@ -115,7 +115,13 @@ class CartActionMixin:
         return u
 
     def get_success_url(self, value=None):
-        return self.get_next_url()
+        u = self.get_next_url()
+        # Add show_cart parameter to open the cart after adding items
+        if '?' in u:
+            u += '&show_cart=true'
+        else:
+            u += '?show_cart=true'
+        return u
 
     def get_error_url(self):
         if "next_error" in self.request.GET and url_has_allowed_host_and_scheme(self.request.GET.get("next_error"), allowed_hosts=None):
