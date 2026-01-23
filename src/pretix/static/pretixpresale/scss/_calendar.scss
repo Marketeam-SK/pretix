@@ -35,6 +35,13 @@
       background: var(--status-border-color);
     }
 
+    // Custom color override from database
+    &.has-custom-color {
+      --status-bg-color: var(--event-color);
+      --status-text-color: #ffffff;
+      --status-border-color: var(--event-color);
+    }
+
     padding: 3px 5px 3px 17px;
     margin-bottom: 3px;
     font-size: 12px;
