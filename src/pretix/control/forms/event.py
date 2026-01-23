@@ -594,6 +594,8 @@ class EventSettingsForm(EventSettingsValidationMixin, FormPlaceholderMixin, Sett
         'checkout_phone_helptext',
         'banner_text',
         'banner_text_bottom',
+        'order_email_asked',
+        'order_email_required',
         'order_email_asked_twice',
         'allow_modifications',
         'last_order_modification_date',

@@ -65,10 +65,21 @@ class ContactForm(forms.Form):
         self.all_optional = kwargs.pop('all_optional', False)
         super().__init__(*args, **kwargs)
 
-        if self.event.settings.order_email_asked_twice:
+        email_asked = self.event.settings.order_email_asked
+        email_required = self.event.settings.order_email_required
+
+        if not email_asked:
+            self.fields.pop('email', None)
+
+        if email_asked:
+            self.fields['email'].required = email_required
+            self.fields['email'].widget.is_required = email_required
+
+        if self.event.settings.order_email_asked_twice and email_asked:
             self.fields['email_repeat'] = forms.EmailField(
                 label=_('Email address (repeated)'),
                 help_text=_('Please enter the same email address again to make sure you typed it correctly.'),
+                required=email_required,
             )
 
         if self.event.settings.order_phone_asked:
@@ -87,12 +98,13 @@ class ContactForm(forms.Form):
                 widget=WrappedPhoneNumberPrefixWidget()
             )
 
-        if not self.request.session.get('iframe_session', False):
+        if 'email' in self.fields and not self.request.session.get('iframe_session', False):
             # There is a browser quirk in Chrome that leads to incorrect initial scrolling in iframes if there
             # is an autofocus field. Who would have thought… See e.g. here:
             # https://floatboxjs.com/forum/topic.php?post=8440&usebb_sid=2e116486a9ec6b7070e045aea8cded5b#post8440
             self.fields['email'].widget.attrs['autofocus'] = 'autofocus'
-        self.fields['email'].help_text = rich_text(self.event.settings.checkout_email_helptext)
+        if 'email' in self.fields:
+            self.fields['email'].help_text = rich_text(self.event.settings.checkout_email_helptext)
 
         responses = contact_form_fields.send(self.event, request=self.request)
         for r, response in responses:
@@ -105,7 +117,12 @@ class ContactForm(forms.Form):
                 v.widget.is_required = False
 
     def clean(self):
-        if self.event.settings.order_email_asked_twice and self.cleaned_data.get('email') and self.cleaned_data.get('email_repeat'):
+        super().clean()
+        if not self.event.settings.order_email_asked:
+            return
+        if self.event.settings.order_email_asked_twice and self.cleaned_data.get('email'):
+            if not self.cleaned_data.get('email_repeat'):
+                raise ValidationError(_('Please enter the same email address twice.'))
             if self.cleaned_data.get('email').lower() != self.cleaned_data.get('email_repeat').lower():
                 raise ValidationError(_('Please enter the same email address twice.'))
 

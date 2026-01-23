@@ -780,13 +780,19 @@ class QuestionsStep(QuestionsViewMixin, CartMixin, TemplateFlowStep):
     @cached_property
     def contact_form(self):
         wd = self.cart_session.get('widget_data', {})
+        email_initial = self.cart_session.get('email', '')
+        if email_initial == settings.PRETIX_EMAIL_NONE_VALUE:
+            email_initial = ''
+        email_repeat_initial = self.cart_session.get('email_repeat', '')
+        if email_repeat_initial == settings.PRETIX_EMAIL_NONE_VALUE:
+            email_repeat_initial = ''
         initial = {
             'email': (
-                self.cart_session.get('email', '') or
+                email_initial or
                 wd.get('email', '')
             ),
             'email_repeat': (
-                self.cart_session.get('email_repeat', '') or
+                email_repeat_initial or
                 wd.get('email', '')
             ),
             'phone': self.cart_session.get('phone', '') or wd.get('phone', None)
@@ -798,7 +804,7 @@ class QuestionsStep(QuestionsViewMixin, CartMixin, TemplateFlowStep):
             initial.update({
                 k: v['initial'] for k, v in overrides.items() if 'initial' in v
             })
-        if self.cart_customer:
+        if self.cart_customer and self.request.event.settings.order_email_asked and self.request.event.settings.order_email_required:
             initial['email'] = self.cart_customer.email
             initial['email_repeat'] = self.cart_customer.email
             if not initial['phone'] and self.cart_customer.phone:
@@ -808,7 +814,10 @@ class QuestionsStep(QuestionsViewMixin, CartMixin, TemplateFlowStep):
                         event=self.request.event,
                         request=self.request,
                         initial=initial, all_optional=self.all_optional)
-        if wd.get('email', '') and wd.get('fix', '') == "true" or self.cart_customer:
+        email_locked = wd.get('email', '') and wd.get('fix', '') == "true"
+        if not email_locked and self.cart_customer and self.request.event.settings.order_email_asked and self.request.event.settings.order_email_required:
+            email_locked = True
+        if email_locked and 'email' in f.fields:
             f.fields['email'].disabled = True
             if 'email_repeat' in f.fields:
                 f.fields['email_repeat'].disabled = True
@@ -951,8 +960,15 @@ class QuestionsStep(QuestionsViewMixin, CartMixin, TemplateFlowStep):
                     self.invoice_form.fields["vat_id"].disabled = False
                     self.cart_session['widget_data'] = widget_data
             return self.render()
-        self.cart_session['email'] = self.contact_form.cleaned_data['email']
+        email_value = self.contact_form.cleaned_data.get('email')
+        if not email_value:
+            email_value = None
+        self.cart_session['email'] = email_value
         d = dict(self.contact_form.cleaned_data)
+        if 'email' in self.contact_form.fields:
+            d['email'] = email_value
+        else:
+            d.pop('email', None)
         if d.get('phone'):
             d['phone'] = str(d['phone'])
         self.cart_session['contact_form_data'] = d
@@ -1017,12 +1033,20 @@ class QuestionsStep(QuestionsViewMixin, CartMixin, TemplateFlowStep):
         self.request = request
         try:
             emailval = EmailValidator()
-            if not self.cart_session.get('email') and not self.all_optional:
+            email = self.cart_session.get('email')
+            if email == settings.PRETIX_EMAIL_NONE_VALUE:
+                email = None
+            email_required = (
+                self.request.event.settings.order_email_asked
+                and self.request.event.settings.order_email_required
+                and not self.all_optional
+            )
+            if not email and email_required:
                 if warn:
                     messages.warning(request, _('Please enter a valid email address.'))
                 return False
-            if self.cart_session.get('email'):
-                emailval(self.cart_session.get('email'))
+            if email:
+                emailval(email)
         except ValidationError:
             if warn:
                 messages.warning(request, _('Please enter a valid email address.'))
@@ -1548,7 +1572,7 @@ class ConfirmStep(CartMixin, AsyncAction, TemplateFlowStep):
         self.cart_session['shown_total'] = str(ctx['cart']['total'])
 
         email = self.cart_session.get('contact_form_data', {}).get('email')
-        if email != settings.PRETIX_EMAIL_NONE_VALUE:
+        if email and email != settings.PRETIX_EMAIL_NONE_VALUE:
             ctx['contact_info'] = [
                 (_('Email'), email),
             ]

@@ -9840,13 +9840,13 @@ msgstr "Vyžadovať e-mailové adresy na tiket"
 #: pretix/base/settings.py:403
 msgid ""
 "Require customers to fill in individual email addresses for all personalized "
-"tickets. See the above option for more details. One email address for the "
-"order confirmation will always be required regardless of this setting."
+"tickets. See the above option for more details. The requirement for the "
+"order email address can be configured separately."
 msgstr ""
 "Vyžadujte od zákazníkov, aby vyplnili individuálne e-mailové adresy pre "
 "všetky personalizované vstupenky. Viac informácií nájdete vo vyššie uvedenej "
-"možnosti. Bez ohľadu na toto nastavenie sa bude vždy vyžadovať jedna e-"
-"mailová adresa pre potvrdenie objednávky."
+"možnosti. Požiadavku na e-mailovú adresu objednávky je možné nastaviť "
+"samostatne."
 
 #: pretix/base/settings.py:415
 msgid "Ask for company per ticket"
@@ -33494,7 +33494,7 @@ msgstr ""
 #, fuzzy
 #| msgid "Lost password?"
 msgid "Forgot your password?"
-msgstr "Stratili ste heslo?"
+msgstr "Zabudli ste heslo?"
 
 #: pretix/presale/forms/customer.py:147
 msgid ""
@@ -33825,7 +33825,7 @@ msgstr "Zobraziť celý košík"
 #: pretix/presale/templates/pretixpresale/event/checkout_base.html:52
 #: pretix/presale/templates/pretixpresale/event/index.html:86
 msgid "Add tickets for a different date"
-msgstr "Vyber si podujatie"
+msgstr "Kalendár"
 
 #: pretix/presale/templates/pretixpresale/event/checkout_confirm.html:8
 #: pretix/presale/templates/pretixpresale/event/checkout_confirm.html:10

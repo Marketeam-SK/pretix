@@ -414,9 +414,28 @@ DEFAULTS = {
         'form_kwargs': dict(
             label=_("Require email addresses per ticket"),
             help_text=_("Require customers to fill in individual email addresses for all personalized tickets. See the "
-                        "above option for more details. One email address for the order confirmation will always be "
-                        "required regardless of this setting."),
+                        "above option for more details. The requirement for the order email address can be configured "
+                        "separately."),
             widget=forms.CheckboxInput(attrs={'data-checkbox-dependency': '#id_settings-attendee_emails_asked'}),
+        )
+    },
+    'order_email_asked': {
+        'default': 'True',
+        'type': bool,
+        'form_class': forms.BooleanField,
+        'serializer_class': serializers.BooleanField,
+        'form_kwargs': dict(
+            label=_("Email"),
+        )
+    },
+    'order_email_required': {
+        'default': 'True',
+        'type': bool,
+        'form_class': forms.BooleanField,
+        'serializer_class': serializers.BooleanField,
+        'form_kwargs': dict(
+            label=_("Ask and require input"),
+            widget=forms.CheckboxInput(attrs={'data-checkbox-dependency': '#id_settings-order_email_asked'}),
         )
     },
     'attendee_company_asked': {
