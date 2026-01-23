@@ -48,7 +48,12 @@
         </script>
     {% endautoescape %}
 
-    {# 1. Najprv zobraz detail eventu, výber lístka a tlačidlo #}
+    {# 1. Najprv zobraz košík - otvorený len po pridaní do košíka #}
+    {% if show_cart %}
+        {% include "pretixpresale/event/fragment_cart_box.html" with open=request.GET.show_cart %}
+    {% endif %}
+
+    {# 2. Potom zobraz kalendár/zoznam podujatí #}
     {% if subevent or not event.has_subevents %}
         {# Zobraz názov podujatia a text titulnej stránky pre daný dátum - LEN HORE #}
         {% if subevent %}
@@ -130,11 +135,7 @@
         {% endif %}
     {% endif %}
 
-    {# 2. Potom zobraz košík, ktorý je fialový a otvorený len po pridaní lístka #}
-    {% if show_cart %}
-        {% include "pretixpresale/event/fragment_cart_box.html" with open=request.GET.show_cart %}
-    {% endif %}
-
+    {# 2. Potom zobraz kalendár/zoznam podujatí #}
     {% if request.event.has_subevents %}
         {% if not subevent %}
 
@@ -195,7 +196,7 @@
             {% endif %}
         {% endif %}
 
-    {% else %}
+    {# 3. Nakoniec zobraz detail vybraného eventu pod kalendárom #}    {% else %}
         {% if event_logo and event_logo_show_title %}
             <h2 class="content-header">
                 {{ event.name }}
