@@ -51,14 +51,13 @@ COPY pyproject.toml /pretix/pyproject.toml
 COPY _build /pretix/_build
 COPY src /pretix/src
 
-RUN pip3 install -U \
-        pip \
-        setuptools \
-        wheel \
-        pretix-plugin-build && \
+RUN pip3 install -U pip setuptools wheel && \
     cd /pretix && \
-    PYTHONPATH=/pretix/src PRETIX_DOCKER_BUILD=TRUE pip3 install \
-        --no-build-isolation \
+    # Nastavíme PYTHONPATH a povieme pluginu, aby NEROBIL build počas inštalácie
+    PYTHONPATH=/pretix/src \
+    PRETIX_DOCKER_BUILD=TRUE \
+    PRETIX_IGNORE_MISSING_SETTINGS=TRUE \
+    pip3 install \
         -e ".[memcached]" \
         gunicorn django-extensions ipython \
         git+https://github.com/Marketeam-SK/pretix-passbook.git && \
