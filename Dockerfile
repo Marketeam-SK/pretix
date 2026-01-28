@@ -54,9 +54,11 @@ COPY src /pretix/src
 RUN pip3 install -U \
         pip \
         setuptools \
-        wheel && \
+        wheel \
+        pretix-plugin-build && \
     cd /pretix && \
     PYTHONPATH=/pretix/src PRETIX_DOCKER_BUILD=TRUE pip3 install \
+        --no-build-isolation \
         -e ".[memcached]" \
         gunicorn django-extensions ipython \
         git+https://github.com/Marketeam-SK/pretix-passbook.git && \
