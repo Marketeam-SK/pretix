@@ -58,7 +58,8 @@ RUN pip3 install -U \
     cd /pretix && \
     PRETIX_DOCKER_BUILD=TRUE pip3 install \
         -e ".[memcached]" \
-        gunicorn django-extensions ipython pretix-passbook && \
+        gunicorn django-extensions ipython \
+        git+https://github.com/Marketeam-SK/pretix-passbook.git && \
     rm -rf ~/.cache/pip
 
 RUN chmod +x /usr/local/bin/pretix && \
