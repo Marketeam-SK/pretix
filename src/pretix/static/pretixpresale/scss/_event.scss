@@ -359,3 +359,33 @@ h2.subevent-head {
 .banner-top, .site-notice-top {
     padding-bottom: 15px;
 }
+.order-header {
+    margin-bottom: 20px;
+    
+    .text-right {
+        h2 {
+            margin: 0;
+        }
+    }
+}
+
+.order-header-meta {
+    margin-bottom: 10px;
+    
+    .label {
+        margin-right: 10px;
+    }
+    
+    .btn {
+        margin-right: 0;
+    }
+}
+
+.order-header-text {
+    text-align: right;
+    
+    p {
+        margin: 0;
+        font-size: 13px;
+    }
+}

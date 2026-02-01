@@ -53,29 +53,42 @@
             {% if request.event.settings.checkout_success_text %}
                 {{ request.event.settings.checkout_success_text|rich_text }}
             {% endif %}
-            <p class="iframe-hidden">{% blocktrans trimmed %}
-                Please bookmark or save the link to this exact page if you want to access your order later.
-                We also sent you an email to the address you specified containing the link to this page.
-            {% endblocktrans %}</p>
-            <p class="iframe-only">{% blocktrans trimmed %}
-                Please save the following link if you want to access your order later.
-                We also sent you an email to the address you specified containing the link.
-            {% endblocktrans %}<br>
-                <code>{{ url }}</code></p>
+            {% if order.testmode or backend_user %}
+                <div class="order-header-meta">
+                    {% if order.testmode %}
+                        <span class="label label-warning">{% trans "TEST MODE" %}</span>
+                    {% endif %}
+                    {% if backend_user %}
+                        <a href="{% url "control:event.order" event=request.event.slug organizer=request.organizer.slug code=order.code %}" class="btn btn-default btn-sm"
+                           target="_blank">
+                            {% trans "View in backend" %}
+                        </a>
+                    {% endif %}
+                </div>
+            {% endif %}
+            <div class="order-header-text">
+                <p class="iframe-hidden">{% blocktrans trimmed %}
+                    Please bookmark or save the link to this exact page if you want to access your order later.
+                    We also sent you an email to the address you specified containing the link to this page.
+                {% endblocktrans %}</p>
+                <p class="iframe-only">{% blocktrans trimmed %}
+                    Please save the following link if you want to access your order later.
+                    We also sent you an email to the address you specified containing the link.
+                {% endblocktrans %}<br>
+                    <code>{{ url }}</code></p>
+            </div>
         </div>
     {% endif %}
 
-    <h2 class="h1">{% trans "Order" %} {{ order.code }}
-        {% if order.testmode %}
-            <span class="label label-warning">{% trans "TEST MODE" %}</span>
-        {% endif %}
-        {% if backend_user %}
-            <a href="{% url "control:event.order" event=request.event.slug organizer=request.organizer.slug code=order.code %}" class="btn btn-default"
-               target="_blank">
-                {% trans "View in backend" %}
-            </a>
-        {% endif %}
-    </h2>
+    <div class="row order-header">
+        <div class="col-xs-12 col-sm-6">
+            <!-- Space for future content if needed -->
+        </div>
+        <div class="col-xs-12 col-sm-6 text-right">
+            <h2 class="h1" style="margin-top: 0;">{% trans "Order" %} {{ order.code }}</h2>
+        </div>
+    </div>
+
     <dl class="lead order-details">
         <dt class="sr-only">Status</dt>
         <dd class="text-muted">{% include "pretixpresale/event/fragment_order_status.html" with order=order event=request.event %}</dd>
