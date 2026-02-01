@@ -51,22 +51,32 @@ COPY pyproject.toml /pretix/pyproject.toml
 COPY _build /pretix/_build
 COPY src /pretix/src
 
-RUN pip3 install -U \
-        pip \
-        setuptools \
-        wheel && \
-    cd /pretix && \
-    PRETIX_DOCKER_BUILD=TRUE pip3 install \
-        -e ".[memcached]" \
-        gunicorn django-extensions ipython pretix-passbook && \
+RUN pip3 install -U pip setuptools wheel
+
+RUN git clone https://github.com/Marketeam-SK/pretix-passbook.git /tmp/pretix-passbook
+
+# 3. Inštalácia
+# Pridávame export DJANGO_SETTINGS_MODULE priamo do RUN príkazu, 
+# aby sme mali istotu, že ho pip v rámci subprocesov uvidí.
+RUN cd /pretix && \
+    export DJANGO_SETTINGS_MODULE=production_settings && \
+    export PYTHONPATH=$PYTHONPATH:/pretix/src && \
+    export PRETIX_DOCKER_BUILD=TRUE && \
+    # Najprv nainštalujeme tvoj plugin (bez spúšťania jeho build skriptov)
+    pip3 install --no-build-isolation /tmp/pretix-passbook && \
+    # Potom nainštalujeme samotný Pretix a ostatné veci
+    pip3 install -e ".[memcached]" gunicorn django-extensions ipython && \
+    rm -rf /tmp/pretix-passbook && \
     rm -rf ~/.cache/pip
 
+# 4. Finálne úpravy a "make production"
 RUN chmod +x /usr/local/bin/pretix && \
     rm /etc/nginx/sites-enabled/default && \
     cd /pretix/src && \
     rm -f pretix.cfg &&  \
     mkdir -p data && \
     chown -R pretixuser:pretixuser /pretix /data data &&  \
+    # Tento krok skompiluje preklady aj pre tvoj plugin, keďže už bude v systéme
     sudo -u pretixuser make production
 
 
