@@ -361,19 +361,25 @@ h2.subevent-head {
 }
 .order-header {
     margin-bottom: 20px;
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
     
-    .text-right {
-        h2 {
-            margin: 0;
-        }
+    .col-xs-12 {
+        padding: 0;
+    }
+    
+    h2 {
+        margin: 0 0 10px 0;
     }
 }
 
 .order-header-meta {
-    margin-bottom: 10px;
+    margin-bottom: 0;
     
     .label {
         margin-right: 10px;
+        display: inline-block;
     }
     
     .btn {
@@ -387,5 +393,6 @@ h2.subevent-head {
     p {
         margin: 0;
         font-size: 13px;
+        color: $text-muted;
     }
 }
