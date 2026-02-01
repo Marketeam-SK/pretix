@@ -360,7 +360,7 @@ h2.subevent-head {
     padding-bottom: 15px;
 }
 .order-header {
-    margin-bottom: 20px;
+    margin-bottom: 5px;
     display: flex;
     align-items: flex-start;
     gap: 20px;
@@ -376,6 +376,11 @@ h2.subevent-head {
     
     .info-download {
         margin-top: 0;
+        
+        .help-block {
+            text-align: right;
+            margin-bottom: 0;
+        }
     }
 }
 
@@ -390,5 +395,10 @@ h2.subevent-head {
     .btn {
         margin-right: 0;
     }
+}
+
+.order-details {
+    margin-top: 0;
+    margin-bottom: 15px;
 }
 
