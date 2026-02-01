@@ -83,11 +83,7 @@
             {% endif %}
         </div>
         <div class="col-xs-12 col-sm-6">
-            <div class="order-header-text">
-                <p class="iframe-hidden">{% blocktrans trimmed %}
-                    Please have your ticket ready when entering the event.
-                {% endblocktrans %}</p>
-            </div>
+            {% include "pretixpresale/event/fragment_downloads.html" with position_page=False %}
         </div>
     </div>
 
@@ -205,7 +201,6 @@
             </div>
         {% endif %}
     {% endif %}
-    {% include "pretixpresale/event/fragment_downloads.html" with position_page=False %}
     <div class="panel panel-default cart">
         <div class="panel-heading">
             <h3 class="panel-title">

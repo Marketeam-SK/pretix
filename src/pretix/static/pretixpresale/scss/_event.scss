@@ -367,10 +367,15 @@ h2.subevent-head {
     
     .col-xs-12 {
         padding: 0;
+        flex: 1;
     }
     
     h2 {
         margin: 0 0 10px 0;
+    }
+    
+    .info-download {
+        margin-top: 0;
     }
 }
 
@@ -387,12 +392,3 @@ h2.subevent-head {
     }
 }
 
-.order-header-text {
-    text-align: right;
-    
-    p {
-        margin: 0;
-        font-size: 13px;
-        color: $text-muted;
-    }
-}
