@@ -1075,6 +1075,17 @@ class MailSettingsForm(FormPlaceholderMixin, SettingsForm):
         validators=[contains_web_channel_validate],
     )
 
+    mail_sales_channel_placed = forms.MultipleChoiceField(
+        choices=[],
+        label=_('Sales channels for order placed emails'),
+        help_text=_('The order placed email will only be send to orders from these sales channels. '
+                    'The online shop must be enabled.'),
+        widget=forms.CheckboxSelectMultiple(
+            attrs={'class': 'scrolling-multiple-choice'}
+        ),
+        required=False,
+    )
+
     mail_sales_channel_download_reminder = forms.MultipleChoiceField(
         choices=[],
         label=_('Sales channels'),
@@ -1502,6 +1513,9 @@ class MailSettingsForm(FormPlaceholderMixin, SettingsForm):
             (r.identifier, r.verbose_name) for r in event.get_html_mail_renderers().values()
         ]
         self.fields['mail_sales_channel_placed_paid'].choices = (
+            (c.identifier, c.label) for c in event.organizer.sales_channels.all()
+        )
+        self.fields['mail_sales_channel_placed'].choices = (
             (c.identifier, c.label) for c in event.organizer.sales_channels.all()
         )
         self.fields['mail_sales_channel_download_reminder'].choices = (

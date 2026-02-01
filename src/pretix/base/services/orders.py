@@ -1337,6 +1337,7 @@ def _perform_order(event: Event, payment_requests: List[dict], position_ids: Lis
             log_entry = 'pretix.event.order.email.order_placed_require_approval'
 
             email_attendees = False
+            send_email = sales_channel.identifier in event.settings.mail_sales_channel_placed_paid
         elif free_order_flow:
             email_template = event.settings.mail_text_order_free
             subject_template = event.settings.mail_subject_order_free
@@ -1345,6 +1346,7 @@ def _perform_order(event: Event, payment_requests: List[dict], position_ids: Lis
             email_attendees = event.settings.mail_send_order_free_attendee
             email_attendees_template = event.settings.mail_text_order_free_attendee
             subject_attendees_template = event.settings.mail_subject_order_free_attendee
+            send_email = sales_channel.identifier in event.settings.mail_sales_channel_placed_paid
         else:
             email_template = event.settings.mail_text_order_placed
             subject_template = event.settings.mail_subject_order_placed
@@ -1353,8 +1355,9 @@ def _perform_order(event: Event, payment_requests: List[dict], position_ids: Lis
             email_attendees = event.settings.mail_send_order_placed_attendee
             email_attendees_template = event.settings.mail_text_order_placed_attendee
             subject_attendees_template = event.settings.mail_subject_order_placed_attendee
+            send_email = sales_channel.identifier in event.settings.mail_sales_channel_placed
 
-        if sales_channel.identifier in event.settings.mail_sales_channel_placed_paid:
+        if send_email:
             _order_placed_email(
                 event,
                 order,

@@ -315,11 +315,33 @@ h2.subevent-head {
 .info-download {
     margin-top: 0;
     margin-bottom: 30px;
-    .download-btn-form + .download-btn-form {
-        margin-left: .5em;
-    }
-    button {
+    
+    .download-btn-form {
+        display: inline-block;
         margin-top: .5em;
+        
+        &+ .download-btn-form {
+            margin-left: .5em;
+        }
+    }
+    
+    .row {
+        display: flex;
+        align-items: flex-start;
+        
+        .col-xs-12 {
+            width: 100%;
+        }
+        
+        .pull-right {
+            margin-left: auto;
+            text-align: right;
+        }
+    }
+    
+    .help-block {
+        clear: both;
+        margin-top: 15px;
     }
 }
 .lead + .info-download {

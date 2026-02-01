@@ -2374,6 +2374,10 @@ DEFAULTS = {
         'default': ['web'],
         'type': list,
     },
+    'mail_sales_channel_placed': {
+        'default': [],
+        'type': list,
+    },
     'mail_sales_channel_download_reminder': {
         'default': ['web'],
         'type': list,

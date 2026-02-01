@@ -37,11 +37,11 @@ msgstr "Arabčina"
 
 #: pretix/_base_settings.py:91
 msgid "Basque"
-msgstr ""
+msgstr "Baskictina"
 
 #: pretix/_base_settings.py:92
 msgid "Catalan"
-msgstr ""
+msgstr "Katalanstina"
 
 #: pretix/_base_settings.py:93
 msgid "Chinese (simplified)"
@@ -57,7 +57,7 @@ msgstr "Český"
 
 #: pretix/_base_settings.py:96
 msgid "Croatian"
-msgstr ""
+msgstr "Horvátština"
 
 #: pretix/_base_settings.py:97
 msgid "Danish"
@@ -89,7 +89,7 @@ msgstr "Grécky"
 
 #: pretix/_base_settings.py:104
 msgid "Hebrew"
-msgstr ""
+msgstr "Hebrejstina"
 
 #: pretix/_base_settings.py:105
 msgid "Indonesian"
@@ -101,7 +101,7 @@ msgstr "Taliansky"
 
 #: pretix/_base_settings.py:107
 msgid "Japanese"
-msgstr ""
+msgstr "Japoncina"
 
 #: pretix/_base_settings.py:108
 msgid "Latvian"
@@ -133,11 +133,11 @@ msgstr "Ruský"
 
 #: pretix/_base_settings.py:115
 msgid "Slovak"
-msgstr ""
+msgstr "Slovencina"
 
 #: pretix/_base_settings.py:116
 msgid "Swedish"
-msgstr ""
+msgstr "Svedcina"
 
 #: pretix/_base_settings.py:117
 msgid "Spanish"
@@ -145,7 +145,7 @@ msgstr "Španielčina"
 
 #: pretix/_base_settings.py:118
 msgid "Spanish (Latin America)"
-msgstr ""
+msgstr "Spaniielstina (Latina Amerika)"
 
 #: pretix/_base_settings.py:119
 msgid "Turkish"
@@ -655,6 +655,7 @@ msgid ""
 "Only includes explicit changes to the voucher, not e.g. an increase of the "
 "number of redemptions."
 msgstr ""
+"Zahrnuje len explicitne zmeny poukazu, napr. zvysenie poctu vykupov."
 
 #: pretix/api/webhooks.py:422
 #, fuzzy
@@ -736,7 +737,7 @@ msgstr "Heslo"
 
 #: pretix/base/auth.py:176 pretix/base/auth.py:183
 msgid "Your password must contain both numeric and alphabetic characters."
-msgstr ""
+msgstr "Vaše heslo musí obsahovať čísla a písmená."
 
 #: pretix/base/auth.py:202 pretix/base/auth.py:212
 #, python-format
@@ -744,9 +745,9 @@ msgid "Your password may not be the same as your previous password."
 msgid_plural ""
 "Your password may not be the same as one of your %(history_length)s previous "
 "passwords."
-msgstr[0] ""
-msgstr[1] ""
-msgstr[2] ""
+msgstr[0] "Vaše heslo nemôže byť rovnaké ako vaše predchádzajúce heslo."
+msgstr[1] "Vaše heslo nemôže byť rovnaké ako jedno z vašich %(history_length)s predchádzajúcich hesiel."
+msgstr[2] "Vaše heslo nemôže byť rovnaké ako jedno z vašich %(history_length)s predchádzajúcich hesiel."
 
 #: pretix/base/channels.py:168
 msgid "Online shop"
@@ -754,13 +755,15 @@ msgstr "Internetový obchod"
 
 #: pretix/base/channels.py:174
 msgid "API"
-msgstr ""
+msgstr "API"
 
 #: pretix/base/channels.py:175
 msgid ""
 "API sales channels come with no built-in functionality, but may be used for "
 "custom integrations."
 msgstr ""
+"API kanály predaja nemajú zabudovanú funkcionalitu, ale je možné ich použiť "
+"pre vlastné integrácie."
 
 #: pretix/base/context.py:38
 #, fuzzy, python-brace-format
@@ -837,6 +840,8 @@ msgid ""
 "Field \"{field_name}\" requires {required_input}, but only got "
 "{available_inputs}. Please check your {provider_name} settings."
 msgstr ""
+"Pole \"{field_name}\" vyžaduje {required_input}, ale dostali ste len "
+"{available_inputs}. Prosím, skontrolujte svoje {provider_name} nastavenia."
 
 #: pretix/base/datasync/datasync.py:282
 #, python-brace-format
@@ -844,6 +849,8 @@ msgid ""
 "Please update value mapping for field \"{field_name}\" - option \"{val}\" "
 "not assigned"
 msgstr ""
+"Prosim, aktualizujte mapovanie hodnot pre pole \"{field_name}\" - moznost "
+"\"{val}\" nie je priradena"
 
 #: pretix/base/datasync/sourcefields.py:128
 #, fuzzy
@@ -3441,7 +3448,7 @@ msgstr "Požadované zrušenie"
 
 #: pretix/base/forms/questions.py:1181
 msgid "Invoice transmission method"
-msgstr ""
+msgstr "Sposob prenosu faktury"
 
 #: pretix/base/forms/questions.py:1327
 msgid "You need to provide a company name."
@@ -3456,6 +3463,7 @@ msgid ""
 "If you enter an invoice address, you also need to select an invoice "
 "transmission method."
 msgstr ""
+"Ak zadáte fakturacnú adresu, musíte tiež vybrať sposob prenosu faktury."
 
 #: pretix/base/forms/questions.py:1397
 #, fuzzy
@@ -3470,10 +3478,12 @@ msgid ""
 "The selected type of invoice transmission requires a field that is currently "
 "not available, please reach out to the organizer."
 msgstr ""
+"Vybrany typ prenosu faktury vyzaduje pole, ktore je aktualne nedostupne, "
+"prosim kontaktujte organizatora."
 
 #: pretix/base/forms/questions.py:1410
 msgid "This field is required for the selected type of invoice transmission."
-msgstr ""
+msgstr "Toto pole je vyrazne povinne pre vybrany typ prenosu faktury."
 
 #: pretix/base/forms/user.py:54 pretix/control/forms/organizer.py:458
 #: pretix/control/forms/users.py:58
@@ -3620,12 +3630,12 @@ msgstr "Náhľad e-mailu"
 #: pretix/base/invoicing/national.py:37
 msgctxt "italian_invoice"
 msgid "Italian Exchange System (SdI)"
-msgstr ""
+msgstr "Talianske vymennopouzitkovne vykazovanie (SdI)"
 
 #: pretix/base/invoicing/national.py:38
 msgctxt "italian_invoice"
 msgid "Exchange System (SdI)"
-msgstr ""
+msgstr "Vymennopouzitkovne vykazovanie (SdI)"
 
 #: pretix/base/invoicing/national.py:49
 #, fuzzy
@@ -3637,7 +3647,7 @@ msgstr "Kód darčekovej karty"
 #: pretix/base/invoicing/national.py:53
 msgctxt "italian_invoice"
 msgid "Address for certified electronic mail"
-msgstr ""
+msgstr "Adresa certifikovaneho elektronickeho mailu"
 
 #: pretix/base/invoicing/national.py:57
 #, fuzzy
@@ -3779,7 +3789,7 @@ msgstr "Množstvo"
 #: pretix/base/invoicing/pdf.py:734 pretix/base/invoicing/pdf.py:1038
 msgctxt "invoice"
 msgid "Tax rate"
-msgstr ""
+msgstr "Sadzba dane"
 
 #: pretix/base/invoicing/pdf.py:735
 msgctxt "invoice"
@@ -3789,12 +3799,12 @@ msgstr "Net"
 #: pretix/base/invoicing/pdf.py:736
 msgctxt "invoice"
 msgid "Gross"
-msgstr ""
+msgstr "Hruba"
 
 #: pretix/base/invoicing/pdf.py:742
 msgctxt "invoice"
 msgid "Amount"
-msgstr ""
+msgstr "Suma"
 
 #: pretix/base/invoicing/pdf.py:869
 #, python-brace-format
@@ -3854,7 +3864,7 @@ msgstr "Hrubá hodnota"
 #: pretix/base/invoicing/pdf.py:1041
 msgctxt "invoice"
 msgid "Tax"
-msgstr ""
+msgstr "Dan"
 
 #: pretix/base/invoicing/pdf.py:1071
 msgctxt "invoice"
@@ -3918,14 +3928,16 @@ msgid ""
 "The Peppol participant ID does not match the validation rules for the prefix "
 "%(number)s. Please reach out to us if you are sure this ID is correct."
 msgstr ""
+"ID uczestnika Peppol nie je v zhode so pravidlami validacie pre prefiks "
+"%(number)s. Prosim, kontaktujte nas, ak ste si isty, ze toto ID je spravne."
 
 #: pretix/base/invoicing/peppol.py:164
 msgid "The Peppol participant ID is not registered on the Peppol network."
-msgstr ""
+msgstr "ID uczestnika Peppol nie je registrovany v sieti Peppol."
 
 #: pretix/base/invoicing/peppol.py:184
 msgid "Peppol participant ID"
-msgstr ""
+msgstr "ID uczestnika Peppol"
 
 #: pretix/base/invoicing/peppol.py:200
 #, fuzzy
@@ -4057,7 +4069,7 @@ msgstr "Bolo nájdených viacero zhodných dátumov."
 
 #: pretix/base/modelimport_orders.py:73
 msgid "Grouping"
-msgstr ""
+msgstr "Zoskupenie"
 
 #: pretix/base/modelimport_orders.py:75
 msgid ""
@@ -4065,6 +4077,9 @@ msgid ""
 "together...\". Lines with the same grouping value will be put in the same "
 "order, but MUST be consecutive lines of the input file."
 msgstr ""
+"Pouzitelne len ak je \"Rezim importu\" nastaveny na \"Zhrupovat viacero "
+"riadkov...\" Riadky s rovnakou hodnotou zoskupenia budu umiestnene v "
+"rovnakej objednavke, ale MUSIA byt po sebe iduce riadky vstupneho suboru."
 
 #: pretix/base/modelimport_orders.py:101
 msgid "Enter a valid phone number."
@@ -9040,7 +9055,8 @@ msgid ""
 "You are receiving this email because someone placed an order for {event} for "
 "you."
 msgstr ""
-"Tento e-mail dostávate, pretože niekto pre vás zadal objednávku na {event}."
+"Tento e-mail dostávate, pretože niekto pre vás zadal"
+"objednávku na {event}."
 
 #: pretix/base/services/mail.py:288 pretix/base/services/mail.py:304
 #, python-brace-format
@@ -13221,7 +13237,8 @@ msgid ""
 "You are receiving this email because someone signed you up for the following "
 "event:"
 msgstr ""
-"Tento e-mail dostávate, pretože vás niekto prihlásil na nasledujúcu udalosť:"
+"Tento e-mail dostávate, pretože vás niekto prihlásil na "
+"nasledujúcu udalosť:"
 
 #: pretix/base/templates/pretixbase/email/order_details.html:12
 msgid "Event:"
@@ -13246,7 +13263,8 @@ msgstr "Kontakt:"
 msgid ""
 "You are receiving this email because you placed an order for "
 "<strong>%(event)s</strong>."
-msgstr "Tento e-mail dostávate, pretože ste si objednali {event}."
+msgstr "Tento e-mail dostávate, pretože ste si objednali"
+"<strong>%(event)s</strong>."
 
 #: pretix/base/templates/pretixbase/email/order_details.html:93
 #: pretix/control/templates/pretixcontrol/organizers/customer.html:23
@@ -36608,6 +36626,150 @@ msgstr "Prístup na zápis"
 #: pretix/settings.py:847
 msgid "Kosovo"
 msgstr "Kosovo"
+
+#: pretix/base/settings.py:2901
+msgid "Activate your account at {organizer}"
+msgstr "Aktivujte svoj účet na {organizer}"
+
+#: pretix/base/settings.py:2904
+msgid ""
+"Hello {name},\n"
+"\n"
+"thank you for signing up for an account at {organizer}!\n"
+"\n"
+"To activate your account and set a password, please click here:\n"
+"\n"
+"{url}\n"
+"\n"
+"This link is valid for one day.\n"
+"\n"
+"If you did not sign up yourself, please ignore this email.\n"
+"\n"
+"Best regards,\n"
+"\n"
+"Your {organizer} team"
+msgstr ""
+"Ahoj {name},\n"
+"\n"
+"Ďakujeme za registráciu účtu na {organizer}!\n"
+"\n"
+"Ak chcete aktivovať svoj účet a nastaviť heslo, kliknite sem:\n"
+"\n"
+"{url}\n"
+"\n"
+"Tento odkaz je platný jeden deň.\n"
+"\n"
+"Ak ste sa sami neregistrovali, prosím ignorujte tento e-mail.\n"
+"\n"
+"S pozdravom,\n"
+"\n"
+"Váš tím {organizer}"
+
+#: pretix/base/settings.py:2923
+msgid "Confirm email address for your account at {organizer}"
+msgstr "Potvrďte e-mailovú adresu vášho účtu na {organizer}"
+
+#: pretix/base/settings.py:2926
+msgid ""
+"Hello {name},\n"
+"\n"
+"you requested to change the email address of your account at {organizer}!\n"
+"\n"
+"To confirm the change, please click here:\n"
+"\n"
+"{url}\n"
+"\n"
+"This link is valid for one day.\n"
+"\n"
+"If you did not request this, please ignore this email.\n"
+"\n"
+"Best regards,\n"
+"\n"
+"Your {organizer} team"
+msgstr ""
+"Ahoj {name},\n"
+"\n"
+"požiadali ste o zmenu e-mailovej adresy svojho účtu na {organizer}!\n"
+"\n"
+"Aby ste potvrdili zmenu, prosím kliknite sem:\n"
+"\n"
+"{url}\n"
+"\n"
+"Tento odkaz je platný jeden deň.\n"
+"\n"
+"Ak ste o to nepožiadali, prosím ignorujte tento e-mail.\n"
+"\n"
+"S pozdravom,\n"
+"\n"
+"Váš tím {organizer}"
+
+#: pretix/base/settings.py:2944
+msgid "Set a new password for your account at {organizer}"
+msgstr "Nastavte nové heslo pre svoj účet na {organizer}"
+
+#: pretix/base/settings.py:2947
+msgid ""
+"Hello {name},\n"
+"\n"
+"you requested a new password for your account at {organizer}!\n"
+"\n"
+"To set a new password, please click here:\n"
+"\n"
+"{url}\n"
+"\n"
+"This link is valid for one day.\n"
+"\n"
+"If you did not request a new password, please ignore this email."
+msgstr ""
+"Ahoj {name},\n"
+"\n"
+"požiadali ste o nové heslo pre svoj účet na {organizer}!\n"
+"\n"
+"Aby ste nastavili nové heslo, prosím kliknite sem:\n"
+"\n"
+"{url}\n"
+"\n"
+"Tento odkaz je platný jeden deň.\n"
+"\n"
+"Ak ste o nové heslo nepožiadali, prosím ignorujte tento e-mail."
+
+#: pretix/presale/forms/customer.py:67
+msgid "You need to fill out all fields."
+msgstr "Musíte vyplniť všetky polia."
+
+#: pretix/presale/forms/customer.py:68
+msgid "You need to enter an email address."
+msgstr "Musíte zadať e-mailovú adresu."
+
+#: pretix/presale/forms/customer.py:70
+msgid "You need to enter a password."
+msgstr "Musíte zadať heslo."
+
+#: pretix/presale/forms/customer.py:71
+msgid "We have not found an account with this email address and password."
+msgstr "Nenašli sme účet s touto e-mailovou adresou a heslom."
+
+#: pretix/presale/forms/customer.py:74
+msgid "Please verify that you entered the correct email address."
+msgstr "Prosím, overte si, že ste zadali správnu e-mailovú adresu."
+
+#: pretix/presale/forms/customer.py:75
+msgid "Please enter the correct password."
+msgstr "Prosím, zadajte správne heslo."
+
+#: pretix/presale/forms/customer.py:76
+msgid "This account is disabled."
+msgstr "Tento účet je deaktivovaný."
+
+#: pretix/presale/forms/customer.py:77
+msgid ""
+"You have not yet activated your account and set a password. Please click the "
+"link in the email we sent you. In case you cannot find it, click \"Forgot "
+"your password?\" to receive a new email."
+msgstr ""
+"Ešte ste neaktivovali svoj účet a nenastavili ste heslo. Prosím, kliknite na "
+"odkaz v e-maile, ktorý sme vám poslali. Ak ho nemôžete nájsť, kliknite na "
+"\"Zabudli ste heslo?\" a dostanete nový e-mail."
 
 #~ msgid ""
 #~ "If you are registered in Switzerland, you can enter your UID instead."

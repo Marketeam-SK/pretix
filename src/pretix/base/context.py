@@ -37,14 +37,8 @@ def get_powered_by(request, safelink=True):
     # Custom powered by for Marketeam
     msg = gettext('<a {a_attr}>powered by Marketeam and pretix</a>').format(
         a_attr='href="{}" target="_blank" rel="noopener"'.format(
-            sl('https://pretix.eu') if safelink else 'https://pretix.eu',
+            sl('https://github.com/Marketeam-SK/pretix') if safelink else 'https://github.com/Marketeam-SK/pretix',
         )
-    )
-
-    # Always show source code link pointing to Marketeam GitHub
-    msg += ' (<a href="{}" target="_blank" rel="noopener">{}</a>)'.format(
-        'https://github.com/Marketeam-SK/pretix',
-        gettext('source code')
     )
 
     return mark_safe(msg)
