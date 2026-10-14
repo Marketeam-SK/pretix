@@ -766,6 +766,11 @@ msgstr ""
 "pre vlastné integrácie."
 
 #: pretix/base/context.py:38
+#, python-brace-format
+msgid "<a {a_attr}>powered by Marketeam and pretix</a>"
+msgstr "<a {a_attr}>Technológia: Marketeam a pretix</a>"
+
+#: pretix/base/context.py:38
 #, fuzzy, python-brace-format
 #| msgid "powered by {name} based on <a {a_attr}>pretix</a>"
 msgid "<a {a_name_attr}>powered by {name}</a> <a {a_attr}>based on pretix</a>"
@@ -13192,7 +13197,7 @@ msgstr ""
 #: pretix/base/templates/pretixbase/email/email_footer.html:3
 #, python-format
 msgid "powered by <a %(a_attr)s>pretix</a>"
-msgstr ""
+msgstr "S využitím <a %(a_attr)s>pretix</a>"
 
 #: pretix/base/templates/pretixbase/email/export_failed.txt:2
 msgid "Your export failed."
