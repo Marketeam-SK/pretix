@@ -724,10 +724,10 @@ class WidgetAPIProductList(EventListMixin, View):
                 for event in qs:
                     tz = ZoneInfo(event.cache.get_or_set('timezone', lambda: event.settings.timezone))
                     if event.has_subevents:
-                        last_date = (
-                            (event.max_fromto or event.max_to or event.max_from)
-                            if event.settings.show_date_to else event.max_from
-                        )
+                        last_date = event.max_fromto or event.max_to or event.max_from
+                        if (self.request.organizer.slug == 'nexum-productions'
+                                and event.slug == 'tanciaren' and not event.settings.show_date_to):
+                            last_date = event.max_from
                         dr = daterange(
                             event.min_from.astimezone(tz),
                             last_date.astimezone(tz)
