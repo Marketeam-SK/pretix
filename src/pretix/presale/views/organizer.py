@@ -481,9 +481,13 @@ class OrganizerIndex(OrganizerViewMixin, EventListMixin, ListView):
         for event in ctx['events']:
             event.tzname = ZoneInfo(event.cache.get_or_set('timezone', lambda: event.settings.timezone))
             if event.has_subevents:
+                last_date = (
+                    (event.max_fromto or event.max_to or event.max_from)
+                    if event.settings.show_date_to else event.max_from
+                )
                 event.daterange = daterange(
                     event.min_from.astimezone(event.tzname),
-                    (event.max_fromto or event.max_to or event.max_from).astimezone(event.tzname),
+                    last_date.astimezone(event.tzname),
                     as_html=True,
                 )
 

@@ -724,9 +724,13 @@ class WidgetAPIProductList(EventListMixin, View):
                 for event in qs:
                     tz = ZoneInfo(event.cache.get_or_set('timezone', lambda: event.settings.timezone))
                     if event.has_subevents:
+                        last_date = (
+                            (event.max_fromto or event.max_to or event.max_from)
+                            if event.settings.show_date_to else event.max_from
+                        )
                         dr = daterange(
                             event.min_from.astimezone(tz),
-                            (event.max_fromto or event.max_to or event.max_from).astimezone(tz)
+                            last_date.astimezone(tz)
                         )
                         avail = {'color': 'none', 'text': gettext('Event series')}
                     else:
