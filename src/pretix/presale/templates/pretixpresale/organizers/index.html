@@ -98,8 +98,11 @@
                 {% endfor %}
                 </div>
             </div>
-            <hr>
+            {% if request.organizer.slug != "nexum-productions" or "old" in request.GET %}
+                <hr>
+            {% endif %}
         {% endif %}
+        {% if request.organizer.slug != "nexum-productions" or "old" in request.GET %}
         <div class="panel-body">
             {% if "old" in request.GET %}
                 <p><em>{% if not events %}{% trans "No archived events found." %} {% endif %}<a href="?{% url_replace request "old" "" %}">{% trans "Show upcoming" %}</a></em></p>
@@ -107,6 +110,11 @@
                 <p><em>{% if not events %}{% trans "No public upcoming events found." %} {% endif %}<a href="?{% url_replace request "old" "1" %}">{% trans "Show past events" %}</a></em></p>
             {% endif %}
         </div>
+        {% elif not events %}
+        <div class="panel-body">
+            <p><em>{% trans "No public upcoming events found." %}</em></p>
+        </div>
+        {% endif %}
     </div>
     {% include "pretixpresale/pagination.html" %}
 {% endblock %}
