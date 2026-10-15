@@ -15,7 +15,7 @@
     {% endif %}
     <a href="?{% if "date" in request.GET %}{% url_replace request "style" "calendar" "old" "" "page" "" "date" date|date:"Y-m" %}{% else %}{% url_replace request "style" "calendar" "old" "" "page" "" %}{% endif %}"
             class="btn btn-default{% if style == "calendar" %} active"  aria-current="page{% endif %}">
-        {% trans "Month" %}
+        {% if request.organizer.slug == "nexum-productions" %}{% trans "Calendar" %}{% else %}{% trans "Month" %}{% endif %}
     </a>
     {% if request.organizer.slug != "nexum-productions" %}
     <a href="?{% if "date" in request.GET %}{% url_replace request "style" "day" "old" "" "page" ""  "date" date|date:"Y-m-d" %}{% else %}{% url_replace request "style" "day" "old" "" "page" ""  "date" %}{% endif %}"
