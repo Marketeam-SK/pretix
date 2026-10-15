@@ -9055,8 +9055,8 @@ msgid ""
 "You are receiving this email because someone placed an order for {event} for "
 "you."
 msgstr ""
-"Tento e-mail dostávate, pretože niekto pre vás zadal"
-"objednávku na {event}."
+"Tento e-mail dostávate, pretože vám niekto objednal vstupenky na podujatie "
+"{event}."
 
 #: pretix/base/services/mail.py:288 pretix/base/services/mail.py:304
 #, python-brace-format
@@ -9071,7 +9071,7 @@ msgstr ""
 #: pretix/base/services/mail.py:300
 #, python-brace-format
 msgid "You are receiving this email because you placed an order for {event}."
-msgstr "Tento e-mail dostávate, pretože ste si objednali {event}."
+msgstr "Tento e-mail dostávate, pretože ste si objednali vstupenky na podujatie {event}."
 
 #: pretix/base/services/mail.py:494
 msgctxt "attachment_filename"
@@ -13256,13 +13256,12 @@ msgid "Contact:"
 msgstr "Kontakt:"
 
 #: pretix/base/templates/pretixbase/email/order_details.html:54
-#, fuzzy, python-format
-#| msgid ""
-#| "You are receiving this email because you placed an order for {event}."
+#, python-format
 msgid ""
 "You are receiving this email because you placed an order for "
 "<strong>%(event)s</strong>."
-msgstr "Tento e-mail dostávate, pretože ste si objednali"
+msgstr ""
+"Tento e-mail dostávate, pretože ste si objednali vstupenky na podujatie "
 "<strong>%(event)s</strong>."
 
 #: pretix/base/templates/pretixbase/email/order_details.html:93
