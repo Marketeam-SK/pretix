@@ -478,6 +478,7 @@ class OrganizerIndex(OrganizerViewMixin, EventListMixin, ListView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
+        display_rows = []
         for event in ctx['events']:
             event.tzname = ZoneInfo(event.cache.get_or_set('timezone', lambda: event.settings.timezone))
             if event.has_subevents:
@@ -490,6 +491,25 @@ class OrganizerIndex(OrganizerViewMixin, EventListMixin, ListView):
                     last_date.astimezone(event.tzname),
                     as_html=True,
                 )
+
+            if (self.request.organizer.slug == 'nexum-productions'
+                    and event.slug == 'tanciaren' and event.has_subevents
+                    and 'old' not in self.request.GET):
+                subevents = filter_qs_by_attr(
+                    event.subevents_annotated(self.request.sales_channel).using(settings.DATABASE_REPLICA).filter(
+                        active=True, is_public=True,
+                    ).filter(
+                        Q(date_to__gte=now()) | Q(date_to__isnull=True, date_from__gte=now())
+                    ), self.request,
+                ).order_by('date_from', 'pk')
+                for subevent in filter_subevents_with_plugins(list(subevents), self.request.sales_channel):
+                    display_rows.append({'event': event, 'subevent': subevent, 'date_from': subevent.date_from})
+            else:
+                display_rows.append({'event': event, 'subevent': None, 'date_from': event.date_from})
+
+        if self.request.organizer.slug == 'nexum-productions' and 'old' not in self.request.GET:
+            display_rows.sort(key=lambda row: row['date_from'])
+        ctx['display_rows'] = display_rows
 
         query_data = self.request.GET.copy()
         filter_query_data = QueryDict(mutable=True)
