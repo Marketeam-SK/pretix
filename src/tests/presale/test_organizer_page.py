@@ -55,6 +55,28 @@ def test_public_event_on_page(env, client):
 
 
 @pytest.mark.django_db
+def test_nexum_lists_dates_from_all_public_series(client):
+    organizer = Organizer.objects.create(name='NEXUM', slug='nexum-productions')
+    with scopes_disabled():
+        first = organizer.events.create(name='Latino', slug='tanciaren', has_subevents=True,
+                                        live=True, is_public=True, date_from=now() + timedelta(days=1))
+        second = organizer.events.create(name='Oldies', slug='oldies-party', has_subevents=True,
+                                         live=True, is_public=True, date_from=now() + timedelta(days=1))
+        latino = first.subevents.create(name='Latino december', active=True, date_from=now() + timedelta(days=3))
+        oldies = second.subevents.create(name='Oldies november', active=True, date_from=now() + timedelta(days=2))
+        second.subevents.create(name='Hidden date', active=True, is_public=False, date_from=now() + timedelta(days=1))
+        second.subevents.create(name='Past date', active=True, date_from=now() - timedelta(days=1))
+
+    response = client.get('/nexum-productions/?style=list')
+    content = response.rendered_content
+    assert f'/nexum-productions/tanciaren/{latino.pk}/' in content
+    assert f'/nexum-productions/oldies-party/{oldies.pk}/' in content
+    assert content.index('Oldies november') < content.index('Latino december')
+    assert 'Hidden date' not in content
+    assert 'Past date' not in content
+
+
+@pytest.mark.django_db
 def test_attributes_on_page(env, client):
     env[1].is_public = True
     env[1].save()

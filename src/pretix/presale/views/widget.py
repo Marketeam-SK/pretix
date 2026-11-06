@@ -721,28 +721,43 @@ class WidgetAPIProductList(EventListMixin, View):
             else:
                 data['events'] = []
                 qs = self._get_event_list_queryset()
-                for event in qs:
-                    tz = ZoneInfo(event.cache.get_or_set('timezone', lambda: event.settings.timezone))
-                    if event.has_subevents:
-                        last_date = event.max_fromto or event.max_to or event.max_from
-                        if (self.request.organizer.slug == 'nexum-productions'
-                                and event.slug == 'tanciaren' and not event.settings.show_date_to):
-                            last_date = event.max_from
-                        dr = daterange(
-                            event.min_from.astimezone(tz),
-                            last_date.astimezone(tz)
-                        )
-                        avail = {'color': 'none', 'text': gettext('Event series')}
-                    else:
-                        dr = self._get_date_range(event, event, tz)
-                        avail = self._get_availability(event, event, tz=tz)
-                    data['events'].append({
-                        'name': str(event.name),
-                        'location': str(event.location),
-                        'date_range': dr,
-                        'availability': avail,
-                        'event_url': build_absolute_uri(event, 'presale:event.index'),
-                    })
+                if self.request.organizer.slug == 'nexum-productions' and 'old' not in self.request.GET:
+                    for row in self._nexum_date_rows(qs):
+                        event = row['event']
+                        subevent = row['subevent']
+                        current = subevent or event
+                        tz = ZoneInfo(event.cache.get_or_set('timezone', lambda: event.settings.timezone))
+                        data['events'].append({
+                            'name': str(current.name),
+                            'location': str(current.location),
+                            'date_range': self._get_date_range(current, event, tz),
+                            'availability': self._get_availability(current, event, tz=tz),
+                            'event_url': build_absolute_uri(event, 'presale:event.index'),
+                            'subevent': subevent.pk if subevent else None,
+                        })
+                else:
+                    for event in qs:
+                        tz = ZoneInfo(event.cache.get_or_set('timezone', lambda: event.settings.timezone))
+                        if event.has_subevents:
+                            last_date = event.max_fromto or event.max_to or event.max_from
+                            if (self.request.organizer.slug == 'nexum-productions'
+                                    and event.slug == 'tanciaren' and not event.settings.show_date_to):
+                                last_date = event.max_from
+                            dr = daterange(
+                                event.min_from.astimezone(tz),
+                                last_date.astimezone(tz)
+                            )
+                            avail = {'color': 'none', 'text': gettext('Event series')}
+                        else:
+                            dr = self._get_date_range(event, event, tz)
+                            avail = self._get_availability(event, event, tz=tz)
+                        data['events'].append({
+                            'name': str(event.name),
+                            'location': str(event.location),
+                            'date_range': dr,
+                            'availability': avail,
+                            'event_url': build_absolute_uri(event, 'presale:event.index'),
+                        })
 
         cache.set(cache_key, data, 30)
         # These pages are cached for a really short duration – this should make them pretty accurate, while still

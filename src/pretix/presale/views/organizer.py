@@ -173,6 +173,25 @@ def filter_qs_by_attr(qs, request, match_subevents_with_conditions: Q=None):
 
 
 class EventListMixin:
+    def _nexum_date_rows(self, events):
+        """Expand public series into their individual upcoming dates."""
+        rows = []
+        for event in events:
+            if event.has_subevents:
+                subevents = filter_qs_by_attr(
+                    event.subevents_annotated(self.request.sales_channel).using(settings.DATABASE_REPLICA).filter(
+                        active=True, is_public=True,
+                    ).filter(
+                        Q(date_to__gte=now()) | Q(date_to__isnull=True, date_from__gte=now())
+                    ), self.request,
+                ).order_by('date_from', 'pk')
+                for subevent in filter_subevents_with_plugins(list(subevents), self.request.sales_channel):
+                    rows.append({'event': event, 'subevent': subevent, 'date_from': subevent.date_from})
+            else:
+                rows.append({'event': event, 'subevent': None, 'date_from': event.date_from})
+        rows.sort(key=lambda row: row['date_from'])
+        return rows
+
     @cached_property
     def filter_form(self):
         return EventListFilterForm(
@@ -492,23 +511,10 @@ class OrganizerIndex(OrganizerViewMixin, EventListMixin, ListView):
                     as_html=True,
                 )
 
-            if (self.request.organizer.slug == 'nexum-productions'
-                    and event.slug == 'tanciaren' and event.has_subevents
-                    and 'old' not in self.request.GET):
-                subevents = filter_qs_by_attr(
-                    event.subevents_annotated(self.request.sales_channel).using(settings.DATABASE_REPLICA).filter(
-                        active=True, is_public=True,
-                    ).filter(
-                        Q(date_to__gte=now()) | Q(date_to__isnull=True, date_from__gte=now())
-                    ), self.request,
-                ).order_by('date_from', 'pk')
-                for subevent in filter_subevents_with_plugins(list(subevents), self.request.sales_channel):
-                    display_rows.append({'event': event, 'subevent': subevent, 'date_from': subevent.date_from})
-            else:
-                display_rows.append({'event': event, 'subevent': None, 'date_from': event.date_from})
+            display_rows.append({'event': event, 'subevent': None, 'date_from': event.date_from})
 
         if self.request.organizer.slug == 'nexum-productions' and 'old' not in self.request.GET:
-            display_rows.sort(key=lambda row: row['date_from'])
+            display_rows = self._nexum_date_rows(ctx['events'])
         ctx['display_rows'] = display_rows
 
         query_data = self.request.GET.copy()

@@ -792,6 +792,28 @@ class WidgetCartTest(CartTestMixin, TestCase):
                 'meta_filter_fields': [],
             }
 
+    def test_nexum_organizer_widget_lists_individual_series_dates(self):
+        self.orga.slug = 'nexum-productions'
+        self.orga.save()
+        self.event.has_subevents = True
+        self.event.live = True
+        self.event.is_public = True
+        self.event.save()
+        with freeze_time('2019-01-01 10:00:00'):
+            with scopes_disabled():
+                second = self.orga.events.create(name='Oldies', slug='oldies-party', has_subevents=True,
+                                                 live=True, is_public=True, date_from=now())
+                later = self.event.subevents.create(name='Latino', active=True, date_from=now() + datetime.timedelta(days=3))
+                earlier = second.subevents.create(name='Oldies', active=True, date_from=now() + datetime.timedelta(days=2))
+                second.subevents.create(name='Hidden', active=True, is_public=False, date_from=now() + datetime.timedelta(days=1))
+                self.orga.events.create(name='Single', slug='single', live=True, is_public=True,
+                                        date_from=now() + datetime.timedelta(days=4))
+            response = self.client.get('/nexum-productions/widget/product_list?style=list')
+            entries = json.loads(response.content.decode())['events']
+            assert [entry['name'] for entry in entries] == ['Oldies', 'Latino', 'Single']
+            assert [entry['subevent'] for entry in entries] == [earlier.pk, later.pk, None]
+            assert entries[0]['event_url'].endswith('/nexum-productions/oldies-party/')
+
     def test_event_list_filtersets_from_allowed_values(self):
         self.event.has_subevents = True
         self.event.settings.timezone = 'Europe/Berlin'
