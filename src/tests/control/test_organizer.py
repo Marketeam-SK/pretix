@@ -90,7 +90,9 @@ class OrganizerTest(SoupTest):
         empty_series = self.orga1.events.create(
             name='Empty series', slug='empty-series', has_subevents=True, date_from=start,
         )
-        restricted = self.orga1.events.create(name='Restricted', slug='restricted', date_from=start)
+        restricted = self.orga1.events.create(
+            name='Restricted', slug='restricted', date_from=start + datetime.timedelta(days=3),
+        )
         self.user.teams.get(organizer=self.orga1).limit_events.add(restricted)
         sales_team = self.orga1.teams.create(can_view_orders=True)
         sales_team.members.add(self.user)
@@ -107,7 +109,7 @@ class OrganizerTest(SoupTest):
         second = create_date(series, 3)
         inactive = create_date(series, 1, active=False)
         past = create_date(series, -2)
-        only_date = create_date(short_series, 2)
+        only_date = create_date(short_series, 1)
         create_date(empty_series, -2)
         separated = create_date(series, 1)
         self.monkeypatch.setattr(
@@ -149,6 +151,7 @@ class OrganizerTest(SoupTest):
             row.select_one('a').get_text(strip=True): row
             for row in doc.select('tbody tr')
         }
+        assert list(rows) == ['Short series', 'Series', 'Restricted', 'Empty series', '30C3']
         assert rows['30C3'].select_one('.ticket-sales').get_text(strip=True) == '1 / 150'
         assert rows['Restricted'].select_one('.ticket-sales').get_text(strip=True) == '—'
         assert rows['Restricted'].select_one('.ticket-sales-value').get_text(strip=True) == '—'
