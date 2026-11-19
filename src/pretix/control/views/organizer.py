@@ -54,7 +54,7 @@ from django.core.files import File
 from django.db import transaction
 from django.db.models import (
     Count, Exists, F, IntegerField, Max, Min, OuterRef, Prefetch,
-    ProtectedError, Q, Subquery, Sum,
+    ProtectedError, Q, Subquery, Sum, prefetch_related_objects,
 )
 from django.db.models.functions import Coalesce, Greatest
 from django.forms import DecimalField
@@ -90,7 +90,9 @@ from pretix.base.models import (
     ReusableMedium, ScheduledOrganizerExport, Team, TeamInvite, User,
 )
 from pretix.base.models.customers import CustomerSSOClient, CustomerSSOProvider
-from pretix.base.models.event import Event, EventMetaProperty, EventMetaValue
+from pretix.base.models.event import (
+    Event, EventMetaProperty, EventMetaValue, SubEvent,
+)
 from pretix.base.models.giftcards import (
     GiftCardAcceptance, GiftCardTransaction, gen_giftcard_secret,
 )
@@ -124,6 +126,7 @@ from pretix.control.forms.organizer import (
 )
 from pretix.control.forms.rrule import RRuleForm
 from pretix.control.logdisplay import OVERVIEW_BANLIST
+from pretix.control.nexum_reporting import SEPARATED_SUBEVENTS, is_latino
 from pretix.control.permissions import (
     AdministratorPermissionRequiredMixin, OrganizerPermissionRequiredMixin,
     organizer_permission_required,
@@ -229,6 +232,47 @@ class OrganizerDetail(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin
     def filter_form(self):
         return EventFilterForm(data=self.request.GET, request=self.request, organizer=self.organizer)
 
+    def add_ticket_sales(self, events):
+        allowed_ids = set(self.request.user.get_events_with_permission(
+            'can_view_orders', self.request
+        ).filter(pk__in=[event.pk for event in events]).values_list('pk', flat=True))
+        if not allowed_ids:
+            return False
+
+        sales_events = [event for event in events if event.pk in allowed_ids]
+        series = [event for event in sales_events if event.has_subevents]
+        upcoming_dates = SubEvent.objects.filter(active=True, date_from__gte=now()).exclude(
+            event_id__in=[event.pk for event in series if is_latino(event)],
+            pk__in=SEPARATED_SUBEVENTS,
+        )
+        prefetch_related_objects(series, Prefetch(
+            'subevents',
+            queryset=upcoming_dates.order_by('date_from', 'pk')[:3],
+            to_attr='upcoming_sales_dates',
+        ))
+
+        standalone_ids = [event.pk for event in sales_events if not event.has_subevents]
+        date_ids = [date.pk for event in series for date in event.upcoming_sales_dates]
+        totals = {
+            (event_id, date_id): count
+            for event_id, date_id, count in OrderPosition.objects.filter(
+                order__event_id__in=allowed_ids,
+                order__status=Order.STATUS_PAID,
+                order__testmode=False,
+                item__admission=True,
+            ).filter(
+                Q(order__event_id__in=standalone_ids, subevent__isnull=True) | Q(subevent_id__in=date_ids)
+            ).order_by().values_list('order__event_id', 'subevent_id').annotate(ticket_count=Count('pk'))
+        }
+        for event in sales_events:
+            event.show_ticket_sales = True
+            if event.has_subevents:
+                for date in event.upcoming_sales_dates:
+                    date.paid_ticket_count = totals.get((event.pk, date.pk), 0)
+            else:
+                event.paid_ticket_count = totals.get((event.pk, None), 0)
+        return True
+
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx['filter_form'] = self.filter_form
@@ -236,6 +280,7 @@ class OrganizerDetail(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin
             self.filter_form['meta_{}'.format(p.name)] for p in
             self.organizer.meta_properties.filter(filter_allowed=True)
         ]
+        ctx['show_ticket_sales'] = self.add_ticket_sales(ctx['events'])
         return ctx
 
 

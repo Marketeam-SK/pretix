@@ -73,6 +73,7 @@ from pretix.control.forms.subevents import (
     SubEventForm, SubEventItemForm, SubEventItemVariationForm,
     SubEventMetaValueForm, TimeFormSet,
 )
+from pretix.control.nexum_reporting import SEPARATED_SUBEVENTS, is_latino
 from pretix.control.permissions import EventPermissionRequiredMixin
 from pretix.control.signals import subevent_forms
 from pretix.control.views import PaginationMixin
@@ -106,6 +107,9 @@ class SubEventQueryMixin:
                 id__in=self.request_data.getlist('subevent')
             )
 
+        if (is_latino(self.request.event) and self.request_data.get('nexum_history') != '1'
+                and ('subevent' not in self.request_data or '__ALL' in self.request_data)):
+            qs = qs.exclude(pk__in=SEPARATED_SUBEVENTS)
         return qs
 
     @cached_property
@@ -120,13 +124,14 @@ class SubEventList(EventPermissionRequiredMixin, PaginationMixin, SubEventQueryM
     permission = 'can_change_settings'
 
     def get_queryset(self):
-        return super().get_queryset(True).prefetch_related(
-            'meta_values',
-            'meta_values__property',
-        )
+        qs = super().get_queryset(True).prefetch_related('meta_values', 'meta_values__property')
+        return qs
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
+        ctx['nexum_latino'] = is_latino(self.request.event)
+        ctx['nexum_history'] = self.request.GET.get('nexum_history') == '1'
+        ctx['nexum_selected'] = 'subevent' in self.request.GET
         ctx['filter_form'] = self.filter_form
         ctx['meta_fields'] = [
             self.filter_form['meta_{}'.format(p.name)] for p in self.request.organizer.meta_properties.filter(filter_allowed=True)

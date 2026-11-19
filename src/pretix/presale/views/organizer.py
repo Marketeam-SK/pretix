@@ -173,6 +173,25 @@ def filter_qs_by_attr(qs, request, match_subevents_with_conditions: Q=None):
 
 
 class EventListMixin:
+    def _nexum_date_rows(self, events):
+        """Expand public series into their individual upcoming dates."""
+        rows = []
+        for event in events:
+            if event.has_subevents:
+                subevents = filter_qs_by_attr(
+                    event.subevents_annotated(self.request.sales_channel).using(settings.DATABASE_REPLICA).filter(
+                        active=True, is_public=True,
+                    ).filter(
+                        Q(date_to__gte=now()) | Q(date_to__isnull=True, date_from__gte=now())
+                    ), self.request,
+                ).order_by('date_from', 'pk')
+                for subevent in filter_subevents_with_plugins(list(subevents), self.request.sales_channel):
+                    rows.append({'event': event, 'subevent': subevent, 'date_from': subevent.date_from})
+            else:
+                rows.append({'event': event, 'subevent': None, 'date_from': event.date_from})
+        rows.sort(key=lambda row: row['date_from'])
+        return rows
+
     @cached_property
     def filter_form(self):
         return EventListFilterForm(
@@ -478,14 +497,25 @@ class OrganizerIndex(OrganizerViewMixin, EventListMixin, ListView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
+        display_rows = []
         for event in ctx['events']:
             event.tzname = ZoneInfo(event.cache.get_or_set('timezone', lambda: event.settings.timezone))
             if event.has_subevents:
+                last_date = event.max_fromto or event.max_to or event.max_from
+                if (self.request.organizer.slug == 'nexum-productions'
+                        and event.slug == 'tanciaren' and not event.settings.show_date_to):
+                    last_date = event.max_from
                 event.daterange = daterange(
                     event.min_from.astimezone(event.tzname),
-                    (event.max_fromto or event.max_to or event.max_from).astimezone(event.tzname),
+                    last_date.astimezone(event.tzname),
                     as_html=True,
                 )
+
+            display_rows.append({'event': event, 'subevent': None, 'date_from': event.date_from})
+
+        if self.request.organizer.slug == 'nexum-productions' and 'old' not in self.request.GET:
+            display_rows = self._nexum_date_rows(ctx['events'])
+        ctx['display_rows'] = display_rows
 
         query_data = self.request.GET.copy()
         filter_query_data = QueryDict(mutable=True)

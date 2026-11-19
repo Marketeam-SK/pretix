@@ -31,6 +31,14 @@
         </div>
         <div class="clearfix"></div>
     </div>
+    {% if nexum_latino %}
+    <div class="alert alert-info" id="nexum-latino-scope">
+      Súhrn účastníkov a hodnota zaplatených položiek nižšie zahŕňajú iba Latino termíny, bez pôvodných vianočných a novoročných termínov.
+      Nezahŕňajú testovacie a stornované položky. Hodnota nie je účtovná tržba ani čistá platba po refundáciách.
+      Objednávky, účtovné exporty, produkty a história naďalej obsahujú celú pôvodnú sériu.
+      <a href="{% url 'control:event.subevents' organizer=request.event.organizer.slug event=request.event.slug %}">Latino dátumy</a>
+    </div>
+    {% endif %}
     {% if has_overpaid_orders %}
         <div class="alert alert-warning">
             {% blocktrans trimmed %}

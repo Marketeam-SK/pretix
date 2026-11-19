@@ -26,10 +26,13 @@ import pytest
 import responses
 from django.db import transaction
 from django.test.utils import override_settings
+from django.utils.timezone import now
 from django_scopes import scopes_disabled
 from tests.base import SoupTest, extract_form_fields
 
-from pretix.base.models import Event, Organizer, Team, User
+from pretix.base.models import (
+    Event, Order, OrderPosition, Organizer, Team, User,
+)
 
 
 @pytest.fixture
@@ -68,6 +71,85 @@ class OrganizerTest(SoupTest):
         doc = self.get_doc('/control/organizer/ccc/')
         tabletext = doc.select("#page-wrapper .table")[0].text
         self.assertIn("30C3", tabletext)
+        assert not doc.select('.ticket-sales')
+
+    @scopes_disabled()
+    def test_organizer_detail_paid_tickets(self):
+        self.orga1.slug = 'nexum-productions'
+        self.orga1.save(update_fields=['slug'])
+        start = now().replace(hour=19, minute=0, second=0, microsecond=0)
+        series = self.orga1.events.create(
+            name='Series', slug='tanciaren', has_subevents=True, date_from=start,
+        )
+        series.settings.timezone = 'Europe/Bratislava'
+        series.settings.show_times = True
+        short_series = self.orga1.events.create(
+            name='Short series', slug='short-series', has_subevents=True, date_from=start,
+        )
+        empty_series = self.orga1.events.create(
+            name='Empty series', slug='empty-series', has_subevents=True, date_from=start,
+        )
+        restricted = self.orga1.events.create(name='Restricted', slug='restricted', date_from=start)
+        self.user.teams.get(organizer=self.orga1).limit_events.add(restricted)
+        sales_team = self.orga1.teams.create(can_view_orders=True)
+        sales_team.members.add(self.user)
+        sales_team.limit_events.add(self.event1, series, short_series, empty_series)
+
+        def create_date(event, days, active=True):
+            return event.subevents.create(
+                name='Series date', active=active, date_from=start + datetime.timedelta(days=days),
+            )
+
+        fourth = create_date(series, 5)
+        third = create_date(series, 4)
+        first = create_date(series, 2)
+        second = create_date(series, 3)
+        inactive = create_date(series, 1, active=False)
+        past = create_date(series, -2)
+        only_date = create_date(short_series, 2)
+        create_date(empty_series, -2)
+        separated = create_date(series, 1)
+        self.monkeypatch.setattr(
+            'pretix.control.views.organizer.SEPARATED_SUBEVENTS', (separated.pk,),
+        )
+
+        def create_order(event, date=None, status=Order.STATUS_PAID, testmode=False):
+            order = event.orders.create(
+                status=status, testmode=testmode, total=12, locale='en',
+                sales_channel=self.orga1.sales_channels.get(identifier='web'),
+            )
+            ticket, _ = event.items.get_or_create(name='Ticket', admission=True, default_price=12)
+            OrderPosition.objects.create(order=order, item=ticket, subevent=date, price=12)
+            return order, ticket
+
+        create_order(self.event1)
+        create_order(restricted)
+        create_order(short_series, only_date)
+        paid_order, ticket = create_order(series, first)
+        OrderPosition.objects.create(order=paid_order, item=ticket, subevent=first, price=12, positionid=2)
+        OrderPosition.objects.create(order=paid_order, item=ticket, subevent=first, price=12, positionid=3, canceled=True)
+        addon = series.items.create(name='Coat check', admission=False, default_price=2)
+        OrderPosition.objects.create(order=paid_order, item=addon, subevent=first, price=2, positionid=4)
+        create_order(series, first, status=Order.STATUS_PENDING)
+        create_order(series, first, status=Order.STATUS_CANCELED)
+        create_order(series, first, testmode=True)
+        for date in (third, fourth, inactive, past, separated):
+            create_order(series, date)
+
+        doc = self.get_doc('/control/organizer/nexum-productions/')
+        rows = {
+            row.select_one('a').get_text(strip=True): row.select_one('.ticket-sales')
+            for row in doc.select('tbody tr')
+        }
+        assert rows['30C3'].get_text(strip=True) == '1'
+        assert rows['Restricted'].get_text(strip=True) == '—'
+        assert rows['Empty series'].get_text(strip=True) == 'No upcoming dates'
+        assert rows['Short series'].get_text(' ', strip=True) == f'{only_date.get_short_date_from_display()} · 1'
+        assert [row.get_text(' ', strip=True) for row in rows['Series'].select('div')] == [
+            f'{first.get_short_date_from_display()} · 2',
+            f'{second.get_short_date_from_display()} · 0',
+            f'{third.get_short_date_from_display()} · 1',
+        ]
 
     def test_organizer_settings(self):
         doc = self.get_doc('/control/organizer/%s/edit' % (self.orga1.slug,))
