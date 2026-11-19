@@ -43,3 +43,10 @@ The fastest restore is the recorded successful image by digest. Use Railway's ro
 - Previous image for rollback: `docker.io/maroszitny/nexum-pretix-summary@sha256:1e6ef0c0630f743fa029cc081a0c40ef811aa52cfa1115267535cea3125604f0`.
 - The image updates the organizer view, template, Slovak catalog, capacity helper, core plugin signal and the installed New Year plugin's policy and handlers. No database migration is required.
 - Verified with 35 source integration tests and isolated HTTP checks with PostgreSQL and Redis. The live organizer result matched the existing New Year combined report, including its historical sales.
+
+## Chronological overview update on 2026-11-19
+
+- Source: `fcec5d78c23e20916926aec07ae70b51429f2ad4`.
+- Active image: `docker.io/maroszitny/nexum-pretix-summary@sha256:6c39b05be939a4d0371b9be56ed053e8f6f4a58d3b6bd2ac48f6014114ba17d3`.
+- Previous image for rollback: `docker.io/maroszitny/nexum-pretix-summary@sha256:bc26a0304802ea19a4368a537ef6416bfa8cf278fca3eedb7b9847de185727a0`.
+- The image updates the organizer view, template and Slovak catalog. The ordering and compact adjacent sales columns passed 35 source tests, isolated Linux/amd64 HTTP checks with PostgreSQL, and a visual check of the live administrator overview.
