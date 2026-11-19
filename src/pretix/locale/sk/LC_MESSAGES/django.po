@@ -21689,6 +21689,10 @@ msgstr "Uhradené vstupenky"
 msgid "Paid / capacity"
 msgstr "Uhradené / kapacita"
 
+#: pretix/control/templates/pretixcontrol/organizers/nexum_timeline.html
+msgid "Ended"
+msgstr "Ukončené"
+
 #: pretix/control/templates/pretixcontrol/organizers/detail.html
 msgid "Value of paid ticket items before partial refunds"
 msgstr "Hodnota uhradených vstupeniek pred čiastočnými refundáciami"

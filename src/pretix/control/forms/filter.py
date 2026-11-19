@@ -1870,7 +1870,16 @@ class EventFilterForm(FilterForm):
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request')
         self.organizer = kwargs.pop('organizer', None)
+        self.occurrence_filters = kwargs.pop('occurrence_filters', False)
         super().__init__(*args, **kwargs)
+        if self.occurrence_filters:
+            occurrence_labels = {
+                'date_future': _('Upcoming events'),
+                'date_past': _('Past events'),
+            }
+            self.fields['status'].choices = [
+                (key, occurrence_labels.get(key, label)) for key, label in self.fields['status'].choices
+            ]
         seen = set()
         for p in self.meta_properties.all():
             if p.name in seen:
@@ -1900,10 +1909,11 @@ class EventFilterForm(FilterForm):
 
     def filter_qs(self, qs):
         fdata = self.cleaned_data
+        status = None if self.occurrence_filters else fdata.get('status')
 
-        if fdata.get('status') == 'live':
+        if status == 'live':
             qs = qs.filter(live=True)
-        elif fdata.get('status') == 'running':
+        elif status == 'running':
             qs = qs.filter(
                 live=True
             ).annotate(
@@ -1913,13 +1923,13 @@ class EventFilterForm(FilterForm):
             ).filter(
                 Q(p_end__gte=now())
             )
-        elif fdata.get('status') == 'notlive':
+        elif status == 'notlive':
             qs = qs.filter(live=False)
-        elif fdata.get('status') == 'future':
+        elif status == 'future':
             qs = qs.filter(presale_start__gte=now())
-        elif fdata.get('status') == 'past':
+        elif status == 'past':
             qs = qs.filter(presale_end__lte=now())
-        elif fdata.get('status') == 'date_future':
+        elif status == 'date_future':
             qs = qs.filter(
                 Q(has_subevents=False) &
                 Q(
@@ -1927,7 +1937,7 @@ class EventFilterForm(FilterForm):
                     | Q(Q(date_to__isnull=False) & Q(date_to__gte=now()))
                 )
             )
-        elif fdata.get('status') == 'date_past':
+        elif status == 'date_past':
             qs = qs.filter(
                 Q(has_subevents=False) &
                 Q(
@@ -1935,7 +1945,7 @@ class EventFilterForm(FilterForm):
                     | Q(Q(date_to__isnull=False) & Q(date_to__lt=now()))
                 )
             )
-        elif fdata.get('status') == 'series':
+        elif status == 'series':
             qs = qs.filter(has_subevents=True)
 
         if fdata.get('organizer'):
@@ -1947,7 +1957,7 @@ class EventFilterForm(FilterForm):
                 Q(name__icontains=i18ncomp(query)) | Q(slug__icontains=query)
             )
 
-        if fdata.get('date_until'):
+        if not self.occurrence_filters and fdata.get('date_until'):
             date_end = make_aware(datetime.combine(
                 fdata.get('date_until') + timedelta(days=1),
                 time(hour=0, minute=0, second=0, microsecond=0)
@@ -1956,7 +1966,7 @@ class EventFilterForm(FilterForm):
                 Q(date_to__isnull=True, date_from__lt=date_end) |
                 Q(date_to__isnull=False, date_to__lt=date_end)
             )
-        if fdata.get('date_from'):
+        if not self.occurrence_filters and fdata.get('date_from'):
             date_start = make_aware(datetime.combine(
                 fdata.get('date_from'),
                 time(hour=0, minute=0, second=0, microsecond=0)
@@ -1987,7 +1997,7 @@ class EventFilterForm(FilterForm):
         for f in filters_by_property_name.values():
             qs = qs.filter(f)
 
-        if fdata.get('ordering'):
+        if not self.occurrence_filters and fdata.get('ordering'):
             qs = qs.order_by(*get_deterministic_ordering(Event, self.get_order_by()))
 
         return qs

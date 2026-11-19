@@ -1,7 +1,6 @@
 {% extends "pretixcontrol/organizers/base.html" %}
 {% load i18n %}
 {% load bootstrap3 %}
-{% load money %}
 {% block inner %}
     <h1>
         {% blocktrans with name=request.organizer.name %}Organizer: {{ name }}{% endblocktrans %}
@@ -59,31 +58,17 @@
                 </a>
             </p>
         {% endif %}
+        {% block events_table %}
         <table class="table table-condensed table-hover">
             <thead>
             <tr>
                 <th>{% trans "Event name" %}</th>
-                {% if not nexum_sales_layout %}
-                    <th>
-                        {% trans "Start date" %}
-                        /
-                        {% trans "End date" %}
-                    </th>
-                {% endif %}
+                <th>{% trans "Start date" %} / {% trans "End date" %}</th>
                 <th>{% trans "Status" %}</th>
                 {% if show_ticket_sales %}
-                    {% if nexum_sales_layout %}
-                        <th class="text-right text-nowrap" style="width: 1%">
-                            {% trans "Paid / capacity" %}
-                        </th>
-                        <th class="text-right text-nowrap" style="width: 1%" title="{% trans 'Value of paid ticket items before partial refunds' %}">
-                            {% trans "Sales" %}
-                        </th>
-                    {% else %}
-                        <th>{% trans "Paid tickets" %}</th>
-                    {% endif %}
+                    <th>{% trans "Paid tickets" %}</th>
                 {% endif %}
-                <th{% if nexum_sales_layout %} style="width: 1%"{% endif %}></th>
+                <th></th>
             </tr>
             </thead>
             <tbody>
@@ -99,7 +84,6 @@
                             {% endif %}
                         {% endfor %}
                     </td>
-                    {% if not nexum_sales_layout %}
                     <td>
                         {% if e.has_subevents %}
                             <span class="fa fa-fw- fa-calendar"></span>
@@ -124,7 +108,6 @@
                             <span class="fa fa-globe text-muted" data-toggle="tooltip" title="{{ e.tzname }}"></span>
                         {% endif %}
                     </td>
-                    {% endif %}
                     <td>
                         {% if not e.live %}
                             <span class="label label-danger">{% trans "Shop disabled" %}</span>
@@ -137,39 +120,24 @@
                         {% endif %}
                     </td>
                     {% if show_ticket_sales %}
-                        <td class="ticket-sales{% if nexum_sales_layout %} text-right text-nowrap{% endif %}">
+                        <td class="ticket-sales">
                             {% if not e.show_ticket_sales %}
                                 —
                             {% elif e.has_subevents %}
                                 {% for date in e.upcoming_sales_dates %}
                                     <div class="text-nowrap">
                                         {{ date.get_short_date_from_display }} ·
-                                        <strong>{{ date.paid_ticket_count }}{% if nexum_sales_layout %} / {{ date.ticket_capacity|default_if_none:"—" }}{% endif %}</strong>
+                                        <strong>{{ date.paid_ticket_count }}</strong>
                                     </div>
                                 {% empty %}
                                     <span class="text-muted">{% trans "No upcoming dates" %}</span>
                                 {% endfor %}
                             {% else %}
-                                <strong>{{ e.paid_ticket_count }}{% if nexum_sales_layout %} / {{ e.ticket_capacity|default_if_none:"—" }}{% endif %}</strong>
+                                <strong>{{ e.paid_ticket_count }}</strong>
                             {% endif %}
                         </td>
-                        {% if nexum_sales_layout %}
-                            <td class="ticket-sales-value text-right text-nowrap">
-                                {% if not e.show_ticket_sales %}
-                                    —
-                                {% elif e.has_subevents %}
-                                    {% for date in e.upcoming_sales_dates %}
-                                        <div class="text-nowrap">{{ date.paid_ticket_amount|money:e.currency }}</div>
-                                    {% empty %}
-                                        —
-                                    {% endfor %}
-                                {% else %}
-                                    <span class="text-nowrap">{{ e.paid_ticket_amount|money:e.currency }}</span>
-                                {% endif %}
-                            </td>
-                        {% endif %}
                     {% endif %}
-                    <td class="text-right flip{% if nexum_sales_layout %} text-nowrap{% endif %}">
+                    <td class="text-right flip">
                         <a href="{% url "control:event.index" organizer=e.organizer.slug event=e.slug %}"
                                 class="btn btn-sm btn-default" title="{% trans "Open event dashboard" %}"
                                 data-toggle="tooltip">
@@ -186,6 +154,7 @@
             {% endfor %}
             </tbody>
         </table>
+        {% endblock %}
         {% include "pretixcontrol/pagination.html" %}
     {% endif %}
 {% endblock %}
