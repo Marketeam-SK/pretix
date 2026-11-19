@@ -72,8 +72,12 @@ from ..logdisplay import OVERVIEW_BANLIST
 NUM_WIDGET = '<div class="numwidget"><span class="num">{num}</span><span class="text">{text}</span></div>'
 
 
+from pretix.control.nexum_reporting import is_latino, scoped_positions
+
+
 @receiver(signal=event_dashboard_widgets)
 def base_widgets(sender, subevent=None, lazy=False, **kwargs):
+    latino_scope = is_latino(sender) and subevent is None
     if not lazy:
         prodc = Item.objects.filter(
             event=sender, active=True,
@@ -87,6 +91,9 @@ def base_widgets(sender, subevent=None, lazy=False, **kwargs):
         else:
             opqs = OrderPosition.objects
 
+        if latino_scope:
+            opqs = scoped_positions(sender, opqs).filter(order__testmode=False, canceled=False)
+
         tickc = opqs.filter(
             order__event=sender, item__admission=True,
             order__status__in=(Order.STATUS_PAID, Order.STATUS_PENDING),
@@ -97,7 +104,7 @@ def base_widgets(sender, subevent=None, lazy=False, **kwargs):
             order__status=Order.STATUS_PAID,
         ).count()
 
-        if subevent:
+        if subevent or latino_scope:
             rev = opqs.filter(
                 order__event=sender, order__status=Order.STATUS_PAID
             ).aggregate(
@@ -133,7 +140,7 @@ def base_widgets(sender, subevent=None, lazy=False, **kwargs):
         {
             'content': None if lazy else NUM_WIDGET.format(
                 num=money_filter(round_decimal(rev, sender.currency), sender.currency, hide_currency=True),
-                text=_('Total revenue ({currency})').format(currency=sender.currency)
+                text=('Hodnota zaplatených položiek Latino ({currency})' if latino_scope else _('Total revenue ({currency})')).format(currency=sender.currency)
             ),
             'lazy': 'total-revenue',
             'display_size': 'small',
@@ -361,6 +368,7 @@ def event_index(request, organizer, event):
             widgets.extend(result)
 
     ctx = {
+        'nexum_latino': is_latino(request.event) and subevent is None,
         'widgets': rearrange(widgets),
         'subevent': subevent,
         'comment_form': CommentForm(initial={'comment': request.event.comment}, readonly=not can_change_event_settings),

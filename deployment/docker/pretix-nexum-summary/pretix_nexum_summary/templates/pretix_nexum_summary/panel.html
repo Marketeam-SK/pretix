@@ -1,0 +1,10 @@
+<section class="panel panel-default" aria-labelledby="nexum-summary-title">
+  <div class="panel-heading"><h2 class="panel-title" id="nexum-summary-title">Novoročná tančiareň – spoločný predaj</h2></div>
+  <div class="panel-body">
+    <p><strong>Zaplatené platné vstupenky spolu: {{ count }}</strong></p>
+    <p>Pôvodný predaj: {{ old.count }} · Nový predaj: {{ new.count }}</p>
+    <p>Hodnota týchto vstupeniek: {{ amount|floatformat:2 }} {{ currency }}</p>
+    <p><small>Bez testovacích, nezaplatených a stornovaných vstupeniek. Hodnota je súčet cien platných položiek, nie účtovná tržba ani čisté prijaté platby po čiastočných refundáciách. Štandardné karty nižšie zobrazujú iba nový predaj. Tento panel nemení kapacitu ani odbavenie.</small></p>
+    <p><a href="{{ old_url }}">Pôvodné objednávky</a> · <a href="{{ new_url }}">Nové objednávky</a></p>
+  </div>
+</section>

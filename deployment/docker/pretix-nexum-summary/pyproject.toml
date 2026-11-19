@@ -1,0 +1,14 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+[project]
+name = "pretix-nexum-summary"
+version = "0.1.0"
+description = "Read-only combined NEXUM New Year sales dashboard"
+requires-python = ">=3.9"
+[project.entry-points."pretix.plugin"]
+pretix_nexum_summary = "pretix_nexum_summary"
+[tool.setuptools.package-data]
+pretix_nexum_summary = ["templates/pretix_nexum_summary/*.html"]
+[tool.setuptools.packages.find]
+include = ["pretix_nexum_summary*"]

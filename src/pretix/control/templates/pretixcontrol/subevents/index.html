@@ -5,6 +5,14 @@
 {% block title %}{% trans "Dates" context "subevent" %}{% endblock %}
 {% block content %}
     <h1>{% trans "Dates" context "subevent" %}</h1>
+    {% if nexum_latino %}
+    <div class="alert alert-info">
+      {% if nexum_selected %}Výslovne vybrané termíny. <a href="?">Iba Latino termíny</a>
+      {% elif nexum_history %}História celej série vrátane oddelených akcií. <a href="?">Iba Latino termíny</a>
+      {% else %}Iba Latino termíny. Vianoce a Nový rok sú samostatné akcie. <a href="?nexum_history=1">Zobraziť aj pôvodné oddelené termíny</a>{% endif %}
+      Pôvodné objednávky a QR kódy zostávajú zachované.
+    </div>
+    {% endif %}
     {% if subevents|length == 0 and not filter_form.filtered %}
         <div class="empty-collection">
             <p>
@@ -28,6 +36,7 @@
                 </h3>
             </div>
             <form class="panel-body filter-form" action="" method="get">
+                {% if nexum_history %}<input type="hidden" name="nexum_history" value="1">{% endif %}
                 <div class="row">
                     <div class="col-lg-2 col-md-6 col-sm-6 col-xs-12">
                         {% bootstrap_field filter_form.query %}
@@ -76,6 +85,7 @@
             </p>
         {% endif %}
         <form action="{% url "control:event.subevents.bulkaction"  organizer=request.event.organizer.slug event=request.event.slug %}" method="post">
+            {% if nexum_history %}<input type="hidden" name="nexum_history" value="1">{% endif %}
             {% csrf_token %}
             {% for field in filter_form %}
                 {{ field.as_hidden }}
@@ -107,7 +117,7 @@
                         </th>
                         <th></th>
                     </tr>
-                    {% if "can_change_event_settings" in request.eventpermset and page_obj.paginator.num_pages > 1 %}
+                    {% if "can_change_event_settings" in request.eventpermset and page_obj.paginator.num_pages > 1 and not nexum_selected %}
                         <tr class="table-select-all warning hidden">
                             <td>
                                 <input type="checkbox" name="__ALL" id="__all" data-results-total="{{ page_obj.paginator.count }}">

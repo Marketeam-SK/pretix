@@ -1,4 +1,4 @@
-FROM python:3.11-bookworm
+FROM python:3.11.18-bookworm@sha256:726d304906fa5eb468e5531e366548d1903286352f5adb54ef508ac01fbd80c6
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
@@ -51,32 +51,28 @@ COPY pyproject.toml /pretix/pyproject.toml
 COPY _build /pretix/_build
 COPY src /pretix/src
 
-RUN pip3 install -U pip setuptools wheel
+COPY deployment/docker/requirements.production.txt /tmp/requirements.production.txt
+RUN pip3 install -r /tmp/requirements.production.txt
 
-RUN git clone https://github.com/Marketeam-SK/pretix-passbook.git /tmp/pretix-passbook
+RUN git clone https://github.com/Marketeam-SK/pretix-passbook.git /tmp/pretix-passbook && \
+    git -C /tmp/pretix-passbook checkout 48d5dfca47976b730dd279504abf9753f23cc1d3
+COPY deployment/docker/pretix-nexum-summary /tmp/pretix-nexum-summary
 
-# 3. Inštalácia
-# Pridávame export DJANGO_SETTINGS_MODULE priamo do RUN príkazu, 
-# aby sme mali istotu, že ho pip v rámci subprocesov uvidí.
 RUN cd /pretix && \
     export DJANGO_SETTINGS_MODULE=production_settings && \
     export PYTHONPATH=$PYTHONPATH:/pretix/src && \
     export PRETIX_DOCKER_BUILD=TRUE && \
-    # Najprv nainštalujeme tvoj plugin (bez spúšťania jeho build skriptov)
-    pip3 install --no-build-isolation /tmp/pretix-passbook && \
-    # Potom nainštalujeme samotný Pretix a ostatné veci
-    pip3 install -e ".[memcached]" gunicorn django-extensions ipython && \
-    rm -rf /tmp/pretix-passbook && \
+    pip3 install --no-deps --no-build-isolation /tmp/pretix-passbook /tmp/pretix-nexum-summary && \
+    pip3 install --no-deps -e ".[memcached]" && \
+    rm -rf /tmp/pretix-passbook /tmp/pretix-nexum-summary && \
     rm -rf ~/.cache/pip
 
-# 4. Finálne úpravy a "make production"
 RUN chmod +x /usr/local/bin/pretix && \
     rm /etc/nginx/sites-enabled/default && \
     cd /pretix/src && \
-    rm -f pretix.cfg &&  \
+    rm -f pretix.cfg && \
     mkdir -p data && \
-    chown -R pretixuser:pretixuser /pretix /data data &&  \
-    # Tento krok skompiluje preklady aj pre tvoj plugin, keďže už bude v systéme
+    chown -R pretixuser:pretixuser /pretix /data data && \
     sudo -u pretixuser make production
 
 
