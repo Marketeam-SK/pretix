@@ -50,3 +50,10 @@ The fastest restore is the recorded successful image by digest. Use Railway's ro
 - Active image: `docker.io/maroszitny/nexum-pretix-summary@sha256:6c39b05be939a4d0371b9be56ed053e8f6f4a58d3b6bd2ac48f6014114ba17d3`.
 - Previous image for rollback: `docker.io/maroszitny/nexum-pretix-summary@sha256:bc26a0304802ea19a4368a537ef6416bfa8cf278fca3eedb7b9847de185727a0`.
 - The image updates the organizer view, template and Slovak catalog. The ordering and compact adjacent sales columns passed 35 source tests, isolated Linux/amd64 HTTP checks with PostgreSQL, and a visual check of the live administrator overview.
+
+## Individual dates and sales history update on 2026-11-19
+
+- Source: `5ea97d5f267a83faff1dad1dcbec38e38eeb16c3`.
+- Active image: `docker.io/maroszitny/nexum-pretix-summary@sha256:53925d05426f8131151b72f295c5a91e4378c45f42af6fa44aefa147c4a05711`.
+- Previous image for rollback: `docker.io/maroszitny/nexum-pretix-summary@sha256:6c39b05be939a4d0371b9be56ed053e8f6f4a58d3b6bd2ac48f6014114ba17d3`.
+- The image updates the organizer view, filters, two organizer templates and the Slovak catalog. Verified with 35 source tests, Linux/amd64 HTTP tests on PostgreSQL and the live NEXUM overview. No database migration is required.
