@@ -28,3 +28,10 @@ Use a synthetic smoke environment to check the organizer table, the default and 
 ## Restore or roll back
 
 The fastest restore is the recorded successful image by digest. Use Railway's rollback to the last known good deployment when available. Keep the existing service configuration, private registry access, volumes and database attached. An application rollback does not require restoring order data. If the registry image is unavailable, rebuild from the recorded source commit and repeat the synthetic checks before promoting it. For a database restore, verify the New Year plugin is enabled for the intended event after recovery.
+
+## Verified release on 2026-11-19
+
+- Application change: `8151ee1039d7679de3b824ecf5ce3cf97a223244`. Complete source and full rebuild recipe: `176d873` and successors.
+- Active image: `docker.io/maroszitny/nexum-pretix-summary@sha256:1e6ef0c0630f743fa029cc081a0c40ef811aa52cfa1115267535cea3125604f0`. The release preserved all layers of the previous image and updated the organizer view, template and Slovak translation. It did not require a database migration.
+- Previous verified image: `docker.io/maroszitny/nexum-pretix-summary@sha256:147712107fb102562ab3ec57d2830f9ab518476de9586628c364d6cd45574f85`.
+- Tests: 32 source integration tests and an isolated HTTP smoke test on the exact Linux/amd64 candidate with PostgreSQL and Redis. Production verification covered the organizer table, the Latino dashboard and date history, the joint New Year sales panel, and the public shops.
