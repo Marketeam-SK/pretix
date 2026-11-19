@@ -21681,6 +21681,14 @@ msgstr "Momentálne nemáte prístup k žiadnym podujatiam."
 msgid "Paid tickets per quota"
 msgstr "Uhradené vstupenky na kvótu"
 
+#: pretix/control/templates/pretixcontrol/organizers/detail.html
+msgid "Paid tickets"
+msgstr "Uhradené vstupenky"
+
+#: pretix/control/templates/pretixcontrol/organizers/detail.html
+msgid "No upcoming dates"
+msgstr "Žiadne nadchádzajúce termíny"
+
 #: pretix/control/templates/pretixcontrol/events/index.html:121
 #: pretix/control/templates/pretixcontrol/organizers/detail.html:97
 #: pretix/control/views/dashboards.py:524 pretix/control/views/typeahead.py:89

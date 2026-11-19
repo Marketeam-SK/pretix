@@ -68,6 +68,9 @@
                     {% trans "End date" %}
                 </th>
                 <th>{% trans "Status" %}</th>
+                {% if show_ticket_sales %}
+                    <th>{% trans "Paid tickets" %}</th>
+                {% endif %}
                 <th></th>
             </tr>
             </thead>
@@ -119,6 +122,24 @@
                             <span class="label label-success">{% trans "On sale" %}</span>
                         {% endif %}
                     </td>
+                    {% if show_ticket_sales %}
+                        <td class="ticket-sales">
+                            {% if not e.show_ticket_sales %}
+                                —
+                            {% elif e.has_subevents %}
+                                {% for date in e.upcoming_sales_dates %}
+                                    <div>
+                                        {{ date.get_short_date_from_display }} ·
+                                        <strong>{{ date.paid_ticket_count }}</strong>
+                                    </div>
+                                {% empty %}
+                                    <span class="text-muted">{% trans "No upcoming dates" %}</span>
+                                {% endfor %}
+                            {% else %}
+                                <strong>{{ e.paid_ticket_count }}</strong>
+                            {% endif %}
+                        </td>
+                    {% endif %}
                     <td class="text-right flip">
                         <a href="{% url "control:event.index" organizer=e.organizer.slug event=e.slug %}"
                                 class="btn btn-sm btn-default" title="{% trans "Open event dashboard" %}"
