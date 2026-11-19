@@ -21686,8 +21686,8 @@ msgid "Paid tickets"
 msgstr "Uhradené vstupenky"
 
 #: pretix/control/templates/pretixcontrol/organizers/detail.html
-msgid "Ticket sales value"
-msgstr "Hodnota predaja vstupeniek"
+msgid "Paid / capacity"
+msgstr "Uhradené / kapacita"
 
 #: pretix/control/templates/pretixcontrol/organizers/detail.html
 msgid "Value of paid ticket items before partial refunds"

@@ -72,17 +72,18 @@
                 {% endif %}
                 <th>{% trans "Status" %}</th>
                 {% if show_ticket_sales %}
-                    <th>
-                        {% trans "Paid tickets" %}
-                        {% if nexum_sales_layout %} / {% trans "Total capacity" %}{% endif %}
-                    </th>
                     {% if nexum_sales_layout %}
-                        <th class="text-right" title="{% trans 'Value of paid ticket items before partial refunds' %}">
-                            {% trans "Ticket sales value" %}
+                        <th class="text-right text-nowrap" style="width: 1%">
+                            {% trans "Paid / capacity" %}
                         </th>
+                        <th class="text-right text-nowrap" style="width: 1%" title="{% trans 'Value of paid ticket items before partial refunds' %}">
+                            {% trans "Sales" %}
+                        </th>
+                    {% else %}
+                        <th>{% trans "Paid tickets" %}</th>
                     {% endif %}
                 {% endif %}
-                <th></th>
+                <th{% if nexum_sales_layout %} style="width: 1%"{% endif %}></th>
             </tr>
             </thead>
             <tbody>
@@ -136,7 +137,7 @@
                         {% endif %}
                     </td>
                     {% if show_ticket_sales %}
-                        <td class="ticket-sales">
+                        <td class="ticket-sales{% if nexum_sales_layout %} text-right text-nowrap{% endif %}">
                             {% if not e.show_ticket_sales %}
                                 —
                             {% elif e.has_subevents %}
@@ -153,7 +154,7 @@
                             {% endif %}
                         </td>
                         {% if nexum_sales_layout %}
-                            <td class="ticket-sales-value text-right">
+                            <td class="ticket-sales-value text-right text-nowrap">
                                 {% if not e.show_ticket_sales %}
                                     —
                                 {% elif e.has_subevents %}
@@ -168,7 +169,7 @@
                             </td>
                         {% endif %}
                     {% endif %}
-                    <td class="text-right flip">
+                    <td class="text-right flip{% if nexum_sales_layout %} text-nowrap{% endif %}">
                         <a href="{% url "control:event.index" organizer=e.organizer.slug event=e.slug %}"
                                 class="btn btn-sm btn-default" title="{% trans "Open event dashboard" %}"
                                 data-toggle="tooltip">

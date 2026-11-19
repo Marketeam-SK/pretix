@@ -53,8 +53,8 @@ from django.core.exceptions import (
 from django.core.files import File
 from django.db import transaction
 from django.db.models import (
-    Count, Exists, F, IntegerField, Max, Min, OuterRef, Prefetch,
-    ProtectedError, Q, Subquery, Sum, prefetch_related_objects,
+    Case, Count, Exists, F, IntegerField, Max, Min, OuterRef, Prefetch,
+    ProtectedError, Q, Subquery, Sum, When, prefetch_related_objects,
 )
 from django.db.models.functions import Coalesce, Greatest
 from django.forms import DecimalField
@@ -127,7 +127,7 @@ from pretix.control.forms.organizer import (
 from pretix.control.forms.rrule import RRuleForm
 from pretix.control.logdisplay import OVERVIEW_BANLIST
 from pretix.control.nexum_reporting import (
-    SEPARATED_SUBEVENTS, is_latino, ticket_capacities,
+    SEPARATED_SUBEVENTS, ticket_capacities,
 )
 from pretix.control.permissions import (
     AdministratorPermissionRequiredMixin, OrganizerPermissionRequiredMixin,
@@ -208,6 +208,20 @@ class OrganizerDetail(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin
     def organizer(self):
         return self.request.organizer
 
+    @cached_property
+    def nexum_sales_layout(self):
+        return self.organizer.slug == 'nexum-productions'
+
+    @cached_property
+    def sales_reference_time(self):
+        return now()
+
+    def upcoming_series_dates(self):
+        dates = SubEvent.objects.filter(active=True, date_from__gte=self.sales_reference_time)
+        if self.nexum_sales_layout:
+            dates = dates.exclude(event__slug='tanciaren', pk__in=SEPARATED_SUBEVENTS)
+        return dates.order_by('date_from', 'pk')
+
     def get_queryset(self):
         qs = self.request.user.get_events_with_any_permission(self.request).select_related(
             'organizer').prefetch_related(
@@ -230,6 +244,14 @@ class OrganizerDetail(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin
         ).order_by("-order_from")
         if self.filter_form.is_valid():
             qs = self.filter_form.filter_qs(qs)
+        if self.nexum_sales_layout:
+            next_date = self.upcoming_series_dates().filter(event_id=OuterRef('pk')).values('date_from')[:1]
+            qs = qs.annotate(
+                upcoming_start=Case(
+                    When(has_subevents=True, then=Subquery(next_date)),
+                    When(date_from__gte=self.sales_reference_time, then=F('date_from')),
+                )
+            ).order_by(F('upcoming_start').asc(nulls_last=True), '-order_from', 'pk')
         return qs
 
     @cached_property
@@ -245,13 +267,9 @@ class OrganizerDetail(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin
 
         sales_events = [event for event in events if event.pk in allowed_ids]
         series = [event for event in sales_events if event.has_subevents]
-        upcoming_dates = SubEvent.objects.filter(active=True, date_from__gte=now()).exclude(
-            event_id__in=[event.pk for event in series if is_latino(event)],
-            pk__in=SEPARATED_SUBEVENTS,
-        )
         prefetch_related_objects(series, Prefetch(
             'subevents',
-            queryset=upcoming_dates.order_by('date_from', 'pk')[:3],
+            queryset=self.upcoming_series_dates()[:3],
             to_attr='upcoming_sales_dates',
         ))
 
@@ -296,8 +314,8 @@ class OrganizerDetail(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin
             self.filter_form['meta_{}'.format(p.name)] for p in
             self.organizer.meta_properties.filter(filter_allowed=True)
         ]
-        ctx['nexum_sales_layout'] = self.organizer.slug == 'nexum-productions'
-        ctx['show_ticket_sales'] = self.add_ticket_sales(ctx['events'], ctx['nexum_sales_layout'])
+        ctx['nexum_sales_layout'] = self.nexum_sales_layout
+        ctx['show_ticket_sales'] = self.add_ticket_sales(ctx['events'], self.nexum_sales_layout)
         return ctx
 
 
