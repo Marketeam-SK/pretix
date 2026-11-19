@@ -114,9 +114,13 @@ def test_organizer_totals_include_new_year_history(data, client):
         response = client.get('/control/organizer/nexum-productions/')
         assert response.status_code == 200
         doc = BeautifulSoup(response.content.decode(response.charset), 'lxml')
-        row = next(row for row in doc.select('tbody tr') if row.select_one('a').text == 'New Year')
+        rows = doc.select('tbody tr')
+        # The historical Latino occurrence must not appear separately from its standalone event.
+        assert [row.select_one('a').get_text(strip=True) for row in rows] == ['New Year']
+        row = rows[0]
+        assert row.select_one('.ticket-sales .event-start').get_text(strip=True) == new.get_short_date_from_display()
         return (
-            row.select_one('.ticket-sales').get_text(strip=True),
+            row.select_one('.ticket-sales strong').get_text(strip=True),
             row.select_one('.ticket-sales-value').get_text(strip=True),
         )
 

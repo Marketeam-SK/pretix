@@ -1,0 +1,78 @@
+{% extends "pretixcontrol/organizers/detail.html" %}
+{% load i18n money %}
+{% block events_table %}
+    <table class="table table-condensed table-hover">
+        <thead>
+        <tr>
+            <th>{% trans "Event name" %}</th>
+            <th>{% trans "Status" %}</th>
+            <th class="text-right text-nowrap" style="width: 1%">
+                {% if show_ticket_sales %}{% trans "Paid / capacity" %}{% else %}{% trans "Date and time" %}{% endif %}
+            </th>
+            {% if show_ticket_sales %}
+                <th class="text-right text-nowrap" style="width: 1%" title="{% trans 'Value of paid ticket items before partial refunds' %}">
+                    {% trans "Sales" %}
+                </th>
+            {% endif %}
+            <th style="width: 1%"></th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for row in events %}
+            {% with e=row.event %}
+                {% url "control:event.index" organizer=e.organizer.slug event=e.slug as dashboard_url %}
+                <tr>
+                    <td>
+                        <strong><a href="{{ dashboard_url }}{% if row.subevent %}?subevent={{ row.subevent.pk }}{% endif %}">{{ e.name }}</a></strong>
+                        <br><small>{{ e.slug }}</small>
+                        {% for k, v in e.meta_data.items %}
+                            {% if v %}<small class="text-muted">&middot; {{ k }}: {{ v }}</small>{% endif %}
+                        {% endfor %}
+                    </td>
+                    <td>
+                        {% if row.ended %}
+                            <span class="label label-default">{% trans "Ended" %}</span>
+                        {% elif not row.shop_enabled %}
+                            <span class="label label-danger">{% trans "Shop disabled" %}</span>
+                        {% elif row.occurrence.presale_has_ended %}
+                            <span class="label label-warning">{% trans "Presale over" %}</span>
+                        {% elif not row.occurrence.presale_is_running %}
+                            <span class="label label-warning">{% trans "Presale not started" %}</span>
+                        {% else %}
+                            <span class="label label-success">{% trans "On sale" %}</span>
+                        {% endif %}
+                    </td>
+                    <td class="ticket-sales text-right text-nowrap">
+                        <span class="event-start">{{ row.start_display }}</span>
+                        {% if show_ticket_sales %}
+                            ·
+                            {% if row.show_ticket_sales %}
+                                <strong>{{ row.paid_ticket_count }} / {{ row.ticket_capacity|default_if_none:"—" }}</strong>
+                            {% else %}
+                                —
+                            {% endif %}
+                        {% endif %}
+                    </td>
+                    {% if show_ticket_sales %}
+                        <td class="ticket-sales-value text-right text-nowrap">
+                            {% if row.show_ticket_sales %}{{ row.paid_ticket_amount|money:e.currency }}{% else %}—{% endif %}
+                        </td>
+                    {% endif %}
+                    <td class="text-right flip text-nowrap">
+                        <a href="{{ dashboard_url }}{% if row.subevent %}?subevent={{ row.subevent.pk }}{% endif %}"
+                           class="btn btn-sm btn-default" title="{% trans 'Open event dashboard' %}" data-toggle="tooltip">
+                            <span class="fa fa-eye"></span>
+                        </a>
+                        {% if "can_create_events" in request.orgapermset %}
+                            <a href="{% url "control:events.add" %}?clone={{ e.pk }}" class="btn btn-sm btn-default"
+                               title="{% trans 'Clone event' %}" data-toggle="tooltip">
+                                <span class="fa fa-copy"></span>
+                            </a>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endwith %}
+        {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

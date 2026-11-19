@@ -36,7 +36,8 @@ import json
 import logging
 import re
 from collections import Counter
-from datetime import time, timedelta
+from dataclasses import dataclass
+from datetime import datetime, time, timedelta
 from decimal import Decimal
 from hashlib import sha1
 from itertools import groupby
@@ -53,8 +54,8 @@ from django.core.exceptions import (
 from django.core.files import File
 from django.db import transaction
 from django.db.models import (
-    Case, Count, Exists, F, IntegerField, Max, Min, OuterRef, Prefetch,
-    ProtectedError, Q, Subquery, Sum, When, prefetch_related_objects,
+    Count, Exists, F, IntegerField, Max, Min, OuterRef, Prefetch,
+    ProtectedError, Q, Subquery, Sum, prefetch_related_objects,
 )
 from django.db.models.functions import Coalesce, Greatest
 from django.forms import DecimalField
@@ -197,6 +198,40 @@ class OrganizerDetailViewMixin:
         return self.request.organizer
 
 
+@dataclass
+class NexumEventRow:
+    event: Event
+    subevent: SubEvent | None
+    reference_time: datetime
+    show_ticket_sales: bool = False
+    paid_ticket_count: int = 0
+    paid_ticket_amount: Decimal = Decimal('0.00')
+    ticket_capacity: int | None = None
+
+    @cached_property
+    def occurrence(self):
+        return self.subevent or self.event
+
+    @cached_property
+    def ended(self):
+        return (self.occurrence.date_to or self.occurrence.date_from) < self.reference_time
+
+    @cached_property
+    def shop_enabled(self):
+        return self.event.live and (self.subevent is None or self.subevent.active)
+
+    @cached_property
+    def local_start(self):
+        return self.occurrence.date_from.astimezone(self.event.timezone)
+
+    def start_display(self):
+        return date_format(self.local_start, 'SHORT_DATETIME_FORMAT')
+
+    def order_key(self):
+        start = self.occurrence.date_from.timestamp()
+        return self.ended, -start if self.ended else start, self.event.pk, self.subevent.pk if self.subevent else 0
+
+
 class OrganizerDetail(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin, ListView):
     model = Event
     template_name = 'pretixcontrol/organizers/detail.html'
@@ -216,11 +251,51 @@ class OrganizerDetail(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin
     def sales_reference_time(self):
         return now()
 
-    def upcoming_series_dates(self):
-        dates = SubEvent.objects.filter(active=True, date_from__gte=self.sales_reference_time)
+    @cached_property
+    def readable_order_events(self):
+        return self.request.user.get_events_with_permission(
+            'can_view_orders', self.request
+        ).filter(organizer_id=self.organizer.pk)
+
+    def get_template_names(self):
         if self.nexum_sales_layout:
-            dates = dates.exclude(event__slug='tanciaren', pk__in=SEPARATED_SUBEVENTS)
-        return dates.order_by('date_from', 'pk')
+            return ['pretixcontrol/organizers/nexum_timeline.html']
+        return super().get_template_names()
+
+    def nexum_rows(self, events):
+        historical_sales = self.paid_ticket_positions().filter(
+            subevent_id=OuterRef('pk'), order__event_id__in=self.readable_order_events.values('pk'),
+        )
+        dates = SubEvent.objects.exclude(event__slug='tanciaren', pk__in=SEPARATED_SUBEVENTS).filter(
+            Q(active=True) | Q(date_from__lt=self.sales_reference_time) & Exists(historical_sales)
+        )
+        events = events.prefetch_related(Prefetch('subevents', queryset=dates, to_attr='nexum_dates'))
+        rows = [
+            NexumEventRow(event, date, self.sales_reference_time)
+            for event in events
+            for date in (event.nexum_dates if event.has_subevents else [None])
+        ]
+        if self.filter_form.is_valid():
+            data = self.filter_form.cleaned_data
+            status_filters = {
+                'live': lambda row: row.shop_enabled and not row.ended,
+                'running': lambda row: row.shop_enabled and not row.ended and row.occurrence.presale_is_running,
+                'notlive': lambda row: not row.shop_enabled or row.ended,
+                'future': lambda row: not row.ended and not row.occurrence.presale_has_ended
+                and not row.occurrence.presale_is_running,
+                'past': lambda row: row.ended or row.occurrence.presale_has_ended,
+                'date_future': lambda row: not row.ended,
+                'date_past': lambda row: row.ended,
+                'series': lambda row: row.subevent is not None,
+            }
+            status_filter = status_filters.get(data['status'])
+            if status_filter is not None:
+                rows = [row for row in rows if status_filter(row)]
+            if data['date_from']:
+                rows = [row for row in rows if row.local_start.date() >= data['date_from']]
+            if data['date_until']:
+                rows = [row for row in rows if row.local_start.date() <= data['date_until']]
+        return sorted(rows, key=NexumEventRow.order_key)
 
     def get_queryset(self):
         qs = self.request.user.get_events_with_any_permission(self.request).select_related(
@@ -233,6 +308,10 @@ class OrganizerDetail(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin
                 to_attr='meta_values_cached'
             )
         ).filter(organizer=self.request.organizer).order_by('-date_from')
+        if self.nexum_sales_layout:
+            if self.filter_form.is_valid():
+                qs = self.filter_form.filter_qs(qs)
+            return self.nexum_rows(qs)
         qs = qs.annotate(
             min_from=Min('subevents__date_from'),
             max_from=Max('subevents__date_from'),
@@ -244,24 +323,60 @@ class OrganizerDetail(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin
         ).order_by("-order_from")
         if self.filter_form.is_valid():
             qs = self.filter_form.filter_qs(qs)
-        if self.nexum_sales_layout:
-            next_date = self.upcoming_series_dates().filter(event_id=OuterRef('pk')).values('date_from')[:1]
-            qs = qs.annotate(
-                upcoming_start=Case(
-                    When(has_subevents=True, then=Subquery(next_date)),
-                    When(date_from__gte=self.sales_reference_time, then=F('date_from')),
-                )
-            ).order_by(F('upcoming_start').asc(nulls_last=True), '-order_from', 'pk')
         return qs
 
     @cached_property
     def filter_form(self):
-        return EventFilterForm(data=self.request.GET, request=self.request, organizer=self.organizer)
+        return EventFilterForm(
+            data=self.request.GET, request=self.request, organizer=self.organizer,
+            occurrence_filters=self.nexum_sales_layout,
+        )
 
-    def add_ticket_sales(self, events, nexum_sales_layout):
-        allowed_ids = set(self.request.user.get_events_with_permission(
-            'can_view_orders', self.request
-        ).filter(pk__in=[event.pk for event in events]).values_list('pk', flat=True))
+    @staticmethod
+    def paid_ticket_positions():
+        return OrderPosition.objects.filter(
+            order__status=Order.STATUS_PAID, order__testmode=False, item__admission=True,
+        )
+
+    def ticket_sales_totals(self, allowed_ids, standalone_ids, date_ids):
+        return {
+            (event_id, date_id): (count, amount)
+            for event_id, date_id, count, amount in self.paid_ticket_positions().filter(
+                order__event_id__in=allowed_ids,
+            ).filter(
+                Q(order__event_id__in=standalone_ids, subevent__isnull=True) | Q(subevent_id__in=date_ids)
+            ).order_by().values_list('order__event_id', 'subevent_id').annotate(
+                ticket_count=Count('pk'), ticket_amount=Sum('price'),
+            )
+        }
+
+    def add_nexum_ticket_sales(self, rows):
+        allowed_ids = set(self.readable_order_events.filter(
+            pk__in={row.event.pk for row in rows},
+        ).values_list('pk', flat=True))
+        sales_rows = [row for row in rows if row.event.pk in allowed_ids]
+        standalone_ids = [row.event.pk for row in sales_rows if row.subevent is None]
+        date_ids = [row.subevent.pk for row in sales_rows if row.subevent is not None]
+        totals = self.ticket_sales_totals(allowed_ids, standalone_ids, date_ids)
+        capacities = ticket_capacities(standalone_ids, date_ids)
+        for row in sales_rows:
+            row.show_ticket_sales = True
+            key = (row.event.pk, row.subevent.pk if row.subevent else None)
+            row.paid_ticket_count, row.paid_ticket_amount = totals.get(key, (0, Decimal('0.00')))
+            row.ticket_capacity = capacities.get(key)
+            if row.subevent is None:
+                for receiver, adjustment in organizer_ticket_sales_adjustment.send(sender=row.event, request=self.request):
+                    if adjustment is not None:
+                        row.paid_ticket_count += adjustment['count']
+                        row.paid_ticket_amount += adjustment['amount']
+                        if row.ticket_capacity is not None:
+                            row.ticket_capacity += adjustment['reserved_capacity']
+        return bool(sales_rows)
+
+    def add_ticket_sales(self, events):
+        allowed_ids = set(self.readable_order_events.filter(
+            pk__in=[event.pk for event in events],
+        ).values_list('pk', flat=True))
         if not allowed_ids:
             return False
 
@@ -269,42 +384,22 @@ class OrganizerDetail(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin
         series = [event for event in sales_events if event.has_subevents]
         prefetch_related_objects(series, Prefetch(
             'subevents',
-            queryset=self.upcoming_series_dates()[:3],
+            queryset=SubEvent.objects.filter(
+                active=True, date_from__gte=self.sales_reference_time,
+            ).order_by('date_from', 'pk')[:3],
             to_attr='upcoming_sales_dates',
         ))
 
         standalone_ids = [event.pk for event in sales_events if not event.has_subevents]
         date_ids = [date.pk for event in series for date in event.upcoming_sales_dates]
-        totals = {
-            (event_id, date_id): (count, amount)
-            for event_id, date_id, count, amount in OrderPosition.objects.filter(
-                order__event_id__in=allowed_ids,
-                order__status=Order.STATUS_PAID,
-                order__testmode=False,
-                item__admission=True,
-            ).filter(
-                Q(order__event_id__in=standalone_ids, subevent__isnull=True) | Q(subevent_id__in=date_ids)
-            ).order_by().values_list('order__event_id', 'subevent_id').annotate(
-                ticket_count=Count('pk'), ticket_amount=Sum('price'),
-            )
-        }
-        capacities = ticket_capacities(standalone_ids, date_ids) if nexum_sales_layout else {}
+        totals = self.ticket_sales_totals(allowed_ids, standalone_ids, date_ids)
         for event in sales_events:
             event.show_ticket_sales = True
-            sales_rows = (
-                [(date, (event.pk, date.pk)) for date in event.upcoming_sales_dates]
-                if event.has_subevents else [(event, (event.pk, None))]
-            )
-            for row, key in sales_rows:
-                row.paid_ticket_count, row.paid_ticket_amount = totals.get(key, (0, Decimal('0.00')))
-                row.ticket_capacity = capacities.get(key)
-            if nexum_sales_layout and not event.has_subevents:
-                for receiver, adjustment in organizer_ticket_sales_adjustment.send(sender=event, request=self.request):
-                    if adjustment is not None:
-                        event.paid_ticket_count += adjustment['count']
-                        event.paid_ticket_amount += adjustment['amount']
-                        if event.ticket_capacity is not None:
-                            event.ticket_capacity += adjustment['reserved_capacity']
+            if event.has_subevents:
+                for date in event.upcoming_sales_dates:
+                    date.paid_ticket_count = totals.get((event.pk, date.pk), (0, None))[0]
+            else:
+                event.paid_ticket_count = totals.get((event.pk, None), (0, None))[0]
         return True
 
     def get_context_data(self, **kwargs):
@@ -314,8 +409,8 @@ class OrganizerDetail(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin
             self.filter_form['meta_{}'.format(p.name)] for p in
             self.organizer.meta_properties.filter(filter_allowed=True)
         ]
-        ctx['nexum_sales_layout'] = self.nexum_sales_layout
-        ctx['show_ticket_sales'] = self.add_ticket_sales(ctx['events'], self.nexum_sales_layout)
+        add_sales = self.add_nexum_ticket_sales if self.nexum_sales_layout else self.add_ticket_sales
+        ctx['show_ticket_sales'] = add_sales(ctx['events'])
         return ctx
 
 

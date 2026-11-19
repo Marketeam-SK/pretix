@@ -4,7 +4,7 @@ The source of truth is the `Marketeam-SK/pretix` repository. Railway runs a test
 
 ## What must survive a rebuild
 
-- The NEXUM organization overview shows paid admissions, configured capacity and the value of paid tickets for standalone events and the three nearest active dates of each series. Rows are ordered by their next active start time, with events without an upcoming start below them. The overview uses the event timezone and checks permission to view orders per event. The value is the sum of individual ticket prices before partial refunds. Pending and test orders, canceled admissions, fees and non-admission products are excluded. Capacity comes from a shared admission quota for the event or date. If the quotas do not identify a single total, the overview displays a dash.
+- The NEXUM organization overview shows one row per standalone event or series date, with the start in the event timezone, paid admissions, configured capacity and the value of paid tickets. Upcoming rows appear nearest first and completed rows follow with the most recent first. Completed rows have an Ended badge. Inactive past dates with paid admissions are visible when the viewer can see their orders. The value is the sum of individual ticket prices before partial refunds. Pending and test orders, canceled admissions, fees and non-admission products are excluded. Capacity comes from a shared admission quota for the event or date.
 - The Latino reporting rules live in `src/pretix/control/nexum_reporting.py` and the event and date-list views and templates. The standard Latino view omits the original dates whose events now have standalone shops. Its history view and explicit date selection retain access to the original records.
 - The `pretix_nexum_summary` plugin lives in `deployment/docker/pretix-nexum-summary`. The Docker build installs it. The restored Pretix database must retain its enabled state on the standalone New Year event. Both the event dashboard and organization overview combine original and standalone New Year sales when the user has order access to both events. For that combined view, the original four reserved seats are added to the standalone quota of 146.
 - The main Dockerfile pins the Python base and the Passbook source revision. The Python dependency list comes from the production-equivalent build. Passbook is pulled from `Marketeam-SK/pretix-passbook` at `48d5dfca47976b730dd279504abf9753f23cc1d3`, with its repository tracked independently.
@@ -50,3 +50,10 @@ The fastest restore is the recorded successful image by digest. Use Railway's ro
 - Active image: `docker.io/maroszitny/nexum-pretix-summary@sha256:6c39b05be939a4d0371b9be56ed053e8f6f4a58d3b6bd2ac48f6014114ba17d3`.
 - Previous image for rollback: `docker.io/maroszitny/nexum-pretix-summary@sha256:bc26a0304802ea19a4368a537ef6416bfa8cf278fca3eedb7b9847de185727a0`.
 - The image updates the organizer view, template and Slovak catalog. The ordering and compact adjacent sales columns passed 35 source tests, isolated Linux/amd64 HTTP checks with PostgreSQL, and a visual check of the live administrator overview.
+
+## Individual dates and sales history update on 2026-11-19
+
+- Source: `5ea97d5f267a83faff1dad1dcbec38e38eeb16c3`.
+- Active image: `docker.io/maroszitny/nexum-pretix-summary@sha256:53925d05426f8131151b72f295c5a91e4378c45f42af6fa44aefa147c4a05711`.
+- Previous image for rollback: `docker.io/maroszitny/nexum-pretix-summary@sha256:6c39b05be939a4d0371b9be56ed053e8f6f4a58d3b6bd2ac48f6014114ba17d3`.
+- The image updates the organizer view, filters, two organizer templates and the Slovak catalog. Verified with 35 source tests, Linux/amd64 HTTP tests on PostgreSQL and the live NEXUM overview. No database migration is required.

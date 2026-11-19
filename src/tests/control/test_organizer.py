@@ -26,6 +26,7 @@ import pytest
 import responses
 from django.db import transaction
 from django.test.utils import override_settings
+from django.utils.formats import date_format
 from django.utils.timezone import now
 from django_scopes import scopes_disabled
 from tests.base import SoupTest, extract_form_fields
@@ -78,6 +79,7 @@ class OrganizerTest(SoupTest):
     def test_organizer_detail_paid_tickets(self):
         self.orga1.slug = 'nexum-productions'
         self.orga1.save(update_fields=['slug'])
+        self.event1.settings.show_times = False
         start = now().replace(hour=19, minute=0, second=0, microsecond=0)
         series = self.orga1.events.create(
             name='Series', slug='tanciaren', has_subevents=True, date_from=start,
@@ -91,27 +93,33 @@ class OrganizerTest(SoupTest):
             name='Empty series', slug='empty-series', has_subevents=True, date_from=start,
         )
         restricted = self.orga1.events.create(
-            name='Restricted', slug='restricted', date_from=start + datetime.timedelta(days=3),
+            name='Restricted', slug='restricted', date_from=start + datetime.timedelta(days=3, hours=1),
         )
-        self.user.teams.get(organizer=self.orga1).limit_events.add(restricted)
+        self.user.teams.get(organizer=self.orga1).limit_events.add(restricted, series)
         sales_team = self.orga1.teams.create(can_view_orders=True)
         sales_team.members.add(self.user)
         sales_team.limit_events.add(self.event1, series, short_series, empty_series)
 
-        def create_date(event, days, active=True):
+        def create_date(event, days, active=True, hours=0):
             return event.subevents.create(
-                name='Series date', active=active, date_from=start + datetime.timedelta(days=days),
+                name='Series date', active=active, date_from=start + datetime.timedelta(days=days, hours=hours),
             )
 
-        fourth = create_date(series, 5)
+        fourth = create_date(series, 5, hours=4)
         third = create_date(series, 4)
         first = create_date(series, 2)
         second = create_date(series, 3)
         inactive = create_date(series, 1, active=False)
         past = create_date(series, -2)
+        sold_inactive = create_date(series, -1, active=False)
         only_date = create_date(short_series, 1)
-        create_date(empty_series, -2)
+        draft = create_date(empty_series, -3, active=False)
         separated = create_date(series, 1)
+        current_time = now()
+        ongoing = series.subevents.create(
+            name='Running date', active=True, date_from=current_time - datetime.timedelta(hours=1),
+            date_to=current_time + datetime.timedelta(hours=1),
+        )
         self.monkeypatch.setattr(
             'pretix.control.views.organizer.SEPARATED_SUBEVENTS', (separated.pk,),
         )
@@ -137,36 +145,64 @@ class OrganizerTest(SoupTest):
         create_order(series, first, status=Order.STATUS_PENDING)
         create_order(series, first, status=Order.STATUS_CANCELED)
         create_order(series, first, testmode=True)
-        for date in (third, fourth, inactive, past, separated):
+        for date in (third, fourth, inactive, past, sold_inactive, separated):
             create_order(series, date)
+        create_order(empty_series, draft, testmode=True)
         vip = series.items.create(name='VIP ticket', admission=True, default_price=30)
         series.quotas.create(name='Venue', subevent=first, size=150).items.add(ticket, vip)
         series.quotas.create(name='VIP', subevent=first, size=10).items.add(vip)
         series.quotas.create(name='Cloakroom', subevent=first, size=12).items.add(addon)
         series.quotas.create(name='Second date', subevent=second, size=100).items.add(ticket)
 
-        doc = self.get_doc('/control/organizer/nexum-productions/')
+        organization_url = '/control/organizer/nexum-productions/'
+        doc = self.get_doc(organization_url)
         assert not any('Start date' in th.get_text() for th in doc.select('thead th'))
-        rows = {
-            row.select_one('a').get_text(strip=True): row
-            for row in doc.select('tbody tr')
-        }
-        assert list(rows) == ['Short series', 'Series', 'Restricted', 'Empty series', '30C3']
-        assert rows['30C3'].select_one('.ticket-sales').get_text(strip=True) == '1 / 150'
-        assert rows['Restricted'].select_one('.ticket-sales').get_text(strip=True) == '—'
-        assert rows['Restricted'].select_one('.ticket-sales-value').get_text(strip=True) == '—'
-        assert rows['Empty series'].select_one('.ticket-sales').get_text(strip=True) == 'No upcoming dates'
-        assert rows['Short series'].select_one('.ticket-sales').get_text(' ', strip=True) == (
-            f'{only_date.get_short_date_from_display()} · 1 / —'
-        )
-        assert [row.get_text(' ', strip=True) for row in rows['Series'].select('.ticket-sales div')] == [
-            f'{first.get_short_date_from_display()} · 2 / 150',
-            f'{second.get_short_date_from_display()} · 0 / 100',
-            f'{third.get_short_date_from_display()} · 1 / —',
+        rows = doc.select('tbody tr')
+        expected = [
+            (series, ongoing, '0 / —', 0, False),
+            (short_series, only_date, '1 / —', 12, False),
+            (series, first, '2 / 150', 24, False),
+            (series, second, '0 / 100', 0, False),
+            (restricted, restricted, '—', None, False),
+            (series, third, '1 / —', 12, False),
+            (series, fourth, '1 / —', 12, False),
+            (series, sold_inactive, '1 / —', 12, True),
+            (series, past, '1 / —', 12, True),
+            (self.event1, self.event1, '1 / 150', 12, True),
         ]
-        assert [row.get_text(strip=True) for row in rows['Series'].select('.ticket-sales-value div')] == [
-            money_filter(amount, series.currency) for amount in (24, 0, 12)
+        assert len(rows) == len(expected)
+        for row, (event, date, count, amount, ended) in zip(rows, expected):
+            assert row.select_one('a').get_text(strip=True) == str(event.name)
+            sales = row.select_one('.ticket-sales')
+            date_label = sales.select_one('.event-start')
+            assert date_label.get_text(strip=True) == date_format(
+                date.date_from.astimezone(event.timezone), 'SHORT_DATETIME_FORMAT',
+            )
+            sales_count = sales.select_one('strong')
+            assert (sales_count.get_text(strip=True) if sales_count else '—') == count
+            sales_value = row.select_one('.ticket-sales-value').get_text(strip=True)
+            assert sales_value == (money_filter(amount, event.currency) if amount is not None else '—')
+            assert (row.select_one('.label').get_text(strip=True) == 'Ended') == ended
+
+        # 23:00 UTC is the following calendar day in Bratislava.
+        local_day = fourth.date_from.astimezone(series.timezone).date().isoformat()
+        filtered = self.get_doc(organization_url, {'date_from': local_day, 'date_until': local_day})
+        assert [el.get_text(strip=True) for el in filtered.select('tbody .event-start')] == [
+            fourth.get_short_date_from_display(),
         ]
+        invalid = self.get_doc(organization_url, {'date_from': 'invalid'})
+        assert len(invalid.select('tbody tr')) == len(expected)
+
+        sales_team.limit_events.remove(series)
+        restricted_doc = self.get_doc(organization_url)
+        series_rows = [
+            row for row in restricted_doc.select('tbody tr') if row.select_one('a').get_text(strip=True) == 'Series'
+        ]
+        assert [row.select_one('.event-start').get_text(strip=True) for row in series_rows] == [
+            date.get_short_date_from_display() for date in (ongoing, first, second, third, fourth, past)
+        ]
+        assert all(row.select_one('.ticket-sales strong') is None for row in series_rows)
+        assert all(row.select_one('.ticket-sales-value').get_text(strip=True) == '—' for row in series_rows)
 
     def test_organizer_settings(self):
         doc = self.get_doc('/control/organizer/%s/edit' % (self.orga1.slug,))
