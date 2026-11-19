@@ -1,6 +1,7 @@
 {% extends "pretixcontrol/organizers/base.html" %}
 {% load i18n %}
 {% load bootstrap3 %}
+{% load money %}
 {% block inner %}
     <h1>
         {% blocktrans with name=request.organizer.name %}Organizer: {{ name }}{% endblocktrans %}
@@ -62,14 +63,24 @@
             <thead>
             <tr>
                 <th>{% trans "Event name" %}</th>
-                <th>
-                    {% trans "Start date" %}
-                    /
-                    {% trans "End date" %}
-                </th>
+                {% if not nexum_sales_layout %}
+                    <th>
+                        {% trans "Start date" %}
+                        /
+                        {% trans "End date" %}
+                    </th>
+                {% endif %}
                 <th>{% trans "Status" %}</th>
                 {% if show_ticket_sales %}
-                    <th>{% trans "Paid tickets" %}</th>
+                    <th>
+                        {% trans "Paid tickets" %}
+                        {% if nexum_sales_layout %} / {% trans "Total capacity" %}{% endif %}
+                    </th>
+                    {% if nexum_sales_layout %}
+                        <th class="text-right" title="{% trans 'Value of paid ticket items before partial refunds' %}">
+                            {% trans "Ticket sales value" %}
+                        </th>
+                    {% endif %}
                 {% endif %}
                 <th></th>
             </tr>
@@ -87,6 +98,7 @@
                             {% endif %}
                         {% endfor %}
                     </td>
+                    {% if not nexum_sales_layout %}
                     <td>
                         {% if e.has_subevents %}
                             <span class="fa fa-fw- fa-calendar"></span>
@@ -111,6 +123,7 @@
                             <span class="fa fa-globe text-muted" data-toggle="tooltip" title="{{ e.tzname }}"></span>
                         {% endif %}
                     </td>
+                    {% endif %}
                     <td>
                         {% if not e.live %}
                             <span class="label label-danger">{% trans "Shop disabled" %}</span>
@@ -128,17 +141,32 @@
                                 —
                             {% elif e.has_subevents %}
                                 {% for date in e.upcoming_sales_dates %}
-                                    <div>
+                                    <div class="text-nowrap">
                                         {{ date.get_short_date_from_display }} ·
-                                        <strong>{{ date.paid_ticket_count }}</strong>
+                                        <strong>{{ date.paid_ticket_count }}{% if nexum_sales_layout %} / {{ date.ticket_capacity|default_if_none:"—" }}{% endif %}</strong>
                                     </div>
                                 {% empty %}
                                     <span class="text-muted">{% trans "No upcoming dates" %}</span>
                                 {% endfor %}
                             {% else %}
-                                <strong>{{ e.paid_ticket_count }}</strong>
+                                <strong>{{ e.paid_ticket_count }}{% if nexum_sales_layout %} / {{ e.ticket_capacity|default_if_none:"—" }}{% endif %}</strong>
                             {% endif %}
                         </td>
+                        {% if nexum_sales_layout %}
+                            <td class="ticket-sales-value text-right">
+                                {% if not e.show_ticket_sales %}
+                                    —
+                                {% elif e.has_subevents %}
+                                    {% for date in e.upcoming_sales_dates %}
+                                        <div class="text-nowrap">{{ date.paid_ticket_amount|money:e.currency }}</div>
+                                    {% empty %}
+                                        —
+                                    {% endfor %}
+                                {% else %}
+                                    <span class="text-nowrap">{{ e.paid_ticket_amount|money:e.currency }}</span>
+                                {% endif %}
+                            </td>
+                        {% endif %}
                     {% endif %}
                     <td class="text-right flip">
                         <a href="{% url "control:event.index" organizer=e.organizer.slug event=e.slug %}"

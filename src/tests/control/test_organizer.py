@@ -33,6 +33,7 @@ from tests.base import SoupTest, extract_form_fields
 from pretix.base.models import (
     Event, Order, OrderPosition, Organizer, Team, User,
 )
+from pretix.base.templatetags.money import money_filter
 
 
 @pytest.fixture
@@ -122,7 +123,8 @@ class OrganizerTest(SoupTest):
             OrderPosition.objects.create(order=order, item=ticket, subevent=date, price=12)
             return order, ticket
 
-        create_order(self.event1)
+        _, standalone_ticket = create_order(self.event1)
+        self.event1.quotas.create(name='Capacity', size=150).items.add(standalone_ticket)
         create_order(restricted)
         create_order(short_series, only_date)
         paid_order, ticket = create_order(series, first)
@@ -135,20 +137,32 @@ class OrganizerTest(SoupTest):
         create_order(series, first, testmode=True)
         for date in (third, fourth, inactive, past, separated):
             create_order(series, date)
+        vip = series.items.create(name='VIP ticket', admission=True, default_price=30)
+        series.quotas.create(name='Venue', subevent=first, size=150).items.add(ticket, vip)
+        series.quotas.create(name='VIP', subevent=first, size=10).items.add(vip)
+        series.quotas.create(name='Cloakroom', subevent=first, size=12).items.add(addon)
+        series.quotas.create(name='Second date', subevent=second, size=100).items.add(ticket)
 
         doc = self.get_doc('/control/organizer/nexum-productions/')
+        assert not any('Start date' in th.get_text() for th in doc.select('thead th'))
         rows = {
-            row.select_one('a').get_text(strip=True): row.select_one('.ticket-sales')
+            row.select_one('a').get_text(strip=True): row
             for row in doc.select('tbody tr')
         }
-        assert rows['30C3'].get_text(strip=True) == '1'
-        assert rows['Restricted'].get_text(strip=True) == '—'
-        assert rows['Empty series'].get_text(strip=True) == 'No upcoming dates'
-        assert rows['Short series'].get_text(' ', strip=True) == f'{only_date.get_short_date_from_display()} · 1'
-        assert [row.get_text(' ', strip=True) for row in rows['Series'].select('div')] == [
-            f'{first.get_short_date_from_display()} · 2',
-            f'{second.get_short_date_from_display()} · 0',
-            f'{third.get_short_date_from_display()} · 1',
+        assert rows['30C3'].select_one('.ticket-sales').get_text(strip=True) == '1 / 150'
+        assert rows['Restricted'].select_one('.ticket-sales').get_text(strip=True) == '—'
+        assert rows['Restricted'].select_one('.ticket-sales-value').get_text(strip=True) == '—'
+        assert rows['Empty series'].select_one('.ticket-sales').get_text(strip=True) == 'No upcoming dates'
+        assert rows['Short series'].select_one('.ticket-sales').get_text(' ', strip=True) == (
+            f'{only_date.get_short_date_from_display()} · 1 / —'
+        )
+        assert [row.get_text(' ', strip=True) for row in rows['Series'].select('.ticket-sales div')] == [
+            f'{first.get_short_date_from_display()} · 2 / 150',
+            f'{second.get_short_date_from_display()} · 0 / 100',
+            f'{third.get_short_date_from_display()} · 1 / —',
+        ]
+        assert [row.get_text(strip=True) for row in rows['Series'].select('.ticket-sales-value div')] == [
+            money_filter(amount, series.currency) for amount in (24, 0, 12)
         ]
 
     def test_organizer_settings(self):

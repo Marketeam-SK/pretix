@@ -135,6 +135,15 @@ As with all event plugin signals, the ``sender`` keyword argument will contain t
 An additional keyword argument ``subevent`` *can* contain a sub-event.
 """
 
+organizer_ticket_sales_adjustment = EventPluginSignal()
+"""
+Arguments: ``request``
+
+Receivers can contribute historical admissions to a standalone event's organizer
+overview. Return a mapping with ``count``, ``amount``, and ``reserved_capacity``
+after verifying access to the historical sales, or return ``None``.
+"""
+
 event_dashboard_widgets = EventPluginSignal()
 """
 This signal is sent out to include widgets in the event dashboard. Receivers

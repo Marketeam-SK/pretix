@@ -1,12 +1,14 @@
 from decimal import Decimal
 from datetime import datetime, timezone
+from bs4 import BeautifulSoup
 import pytest
 from django.test import RequestFactory
 from django.contrib.sessions.backends.db import SessionStore
 from django_scopes import scope, scopes_disabled
 from pretix.base.models import Organizer, Event, User, Team, Order, OrderPosition
-from pretix.control.signals import event_dashboard_top
-from pretix_nexum_summary.signals import combined_dashboard, totals
+from pretix.base.templatetags.money import money_filter
+from pretix.control.signals import event_dashboard_top, organizer_ticket_sales_adjustment
+from pretix_nexum_summary.signals import combined_dashboard, historical_sales, totals
 
 @pytest.fixture
 def data(db):
@@ -58,6 +60,39 @@ def test_plugin_disabled_signal(data):
         new.plugins='';new.save()
         from django.test import RequestFactory
         assert all(receiver!=combined_dashboard for receiver,_ in event_dashboard_top.send(new,request=RequestFactory().get('/')))
+        assert historical_sales not in dict(organizer_ticket_sales_adjustment.send(new, request=RequestFactory().get('/')))
+
+
+def test_organizer_adjustment_uses_only_legacy_new_year_admissions(data):
+    org, old, new, team, req, add, sub, old_item, new_item = data
+    with scope(organizer=org):
+        add(old, old_item, 1, sub, status=Order.STATUS_PENDING)
+        add(old, old_item, 1, sub, testmode=True)
+        add(old, old_item, 1, sub, canceled=True)
+        other_item = old.items.create(name='Other ticket', default_price=55, admission=True)
+        add(old, other_item, 1, sub)
+        other_date = old.subevents.create(name='Other date', date_from=sub.date_from, active=True)
+        add(old, old_item, 1, other_date)
+
+        assert dict(organizer_ticket_sales_adjustment.send(new, request=req))[historical_sales] == {
+            'count': 4, 'amount': Decimal('220'), 'reserved_capacity': 4,
+        }
+        OrderPosition.objects.filter(order__event=old, subevent=sub, item=old_item).update(canceled=True)
+        assert dict(organizer_ticket_sales_adjustment.send(new, request=req))[historical_sales] == {
+            'count': 0, 'amount': Decimal('0.00'), 'reserved_capacity': 4,
+        }
+
+
+def test_organizer_adjustment_rejects_unreadable_or_mismatched_source(data):
+    org, old, new, team, req, *_ = data
+    with scope(organizer=org):
+        new.currency = 'USD'
+        assert dict(organizer_ticket_sales_adjustment.send(new, request=req))[historical_sales] is None
+
+        new.currency = 'EUR'
+        team.limit_events.remove(old)
+        req.user = User.objects.get(pk=req.user.pk)
+        assert dict(organizer_ticket_sales_adjustment.send(new, request=req))[historical_sales] is None
 
 def test_dashboard_http_route(data, client):
     org,old,new,team,req,*_=data
@@ -67,6 +102,28 @@ def test_dashboard_http_route(data, client):
     assert 'Novoročná tančiareň – spoločný predaj' in response.content.decode()
     assert 'Zaplatené platné vstupenky spolu: 5' in response.content.decode()
     assert '?subevent=35' in response.content.decode()
+
+
+def test_organizer_totals_include_new_year_history(data, client):
+    org, old, new, team, req, _, _, _, ticket = data
+    with scope(organizer=org):
+        new.quotas.create(name='Standalone capacity', size=146).items.add(ticket)
+    client.force_login(req.user)
+
+    def sales_cells():
+        response = client.get('/control/organizer/nexum-productions/')
+        assert response.status_code == 200
+        doc = BeautifulSoup(response.content.decode(response.charset), 'lxml')
+        row = next(row for row in doc.select('tbody tr') if row.select_one('a').text == 'New Year')
+        return (
+            row.select_one('.ticket-sales').get_text(strip=True),
+            row.select_one('.ticket-sales-value').get_text(strip=True),
+        )
+
+    assert sales_cells() == ('5 / 150', money_filter(275, 'EUR'))
+    with scope(organizer=org):
+        team.limit_events.remove(old)
+    assert sales_cells() == ('1 / 146', money_filter(55, 'EUR'))
 
 def test_dashboard_http_permission_no_leak(data,client):
     org,old,new,team,req,*_=data
