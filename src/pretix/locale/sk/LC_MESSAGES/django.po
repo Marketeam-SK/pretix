@@ -21686,6 +21686,14 @@ msgid "Paid tickets"
 msgstr "Uhradené vstupenky"
 
 #: pretix/control/templates/pretixcontrol/organizers/detail.html
+msgid "Ticket sales value"
+msgstr "Hodnota predaja vstupeniek"
+
+#: pretix/control/templates/pretixcontrol/organizers/detail.html
+msgid "Value of paid ticket items before partial refunds"
+msgstr "Hodnota uhradených vstupeniek pred čiastočnými refundáciami"
+
+#: pretix/control/templates/pretixcontrol/organizers/detail.html
 msgid "No upcoming dates"
 msgstr "Žiadne nadchádzajúce termíny"
 

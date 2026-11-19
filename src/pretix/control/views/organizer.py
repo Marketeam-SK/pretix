@@ -126,12 +126,16 @@ from pretix.control.forms.organizer import (
 )
 from pretix.control.forms.rrule import RRuleForm
 from pretix.control.logdisplay import OVERVIEW_BANLIST
-from pretix.control.nexum_reporting import SEPARATED_SUBEVENTS, is_latino
+from pretix.control.nexum_reporting import (
+    SEPARATED_SUBEVENTS, is_latino, ticket_capacities,
+)
 from pretix.control.permissions import (
     AdministratorPermissionRequiredMixin, OrganizerPermissionRequiredMixin,
     organizer_permission_required,
 )
-from pretix.control.signals import nav_organizer
+from pretix.control.signals import (
+    nav_organizer, organizer_ticket_sales_adjustment,
+)
 from pretix.control.views import PaginationMixin
 from pretix.control.views.mailsetup import MailSettingsSetupView
 from pretix.helpers import OF_SELF, GroupConcat
@@ -232,7 +236,7 @@ class OrganizerDetail(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin
     def filter_form(self):
         return EventFilterForm(data=self.request.GET, request=self.request, organizer=self.organizer)
 
-    def add_ticket_sales(self, events):
+    def add_ticket_sales(self, events, nexum_sales_layout):
         allowed_ids = set(self.request.user.get_events_with_permission(
             'can_view_orders', self.request
         ).filter(pk__in=[event.pk for event in events]).values_list('pk', flat=True))
@@ -254,23 +258,35 @@ class OrganizerDetail(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin
         standalone_ids = [event.pk for event in sales_events if not event.has_subevents]
         date_ids = [date.pk for event in series for date in event.upcoming_sales_dates]
         totals = {
-            (event_id, date_id): count
-            for event_id, date_id, count in OrderPosition.objects.filter(
+            (event_id, date_id): (count, amount)
+            for event_id, date_id, count, amount in OrderPosition.objects.filter(
                 order__event_id__in=allowed_ids,
                 order__status=Order.STATUS_PAID,
                 order__testmode=False,
                 item__admission=True,
             ).filter(
                 Q(order__event_id__in=standalone_ids, subevent__isnull=True) | Q(subevent_id__in=date_ids)
-            ).order_by().values_list('order__event_id', 'subevent_id').annotate(ticket_count=Count('pk'))
+            ).order_by().values_list('order__event_id', 'subevent_id').annotate(
+                ticket_count=Count('pk'), ticket_amount=Sum('price'),
+            )
         }
+        capacities = ticket_capacities(standalone_ids, date_ids) if nexum_sales_layout else {}
         for event in sales_events:
             event.show_ticket_sales = True
-            if event.has_subevents:
-                for date in event.upcoming_sales_dates:
-                    date.paid_ticket_count = totals.get((event.pk, date.pk), 0)
-            else:
-                event.paid_ticket_count = totals.get((event.pk, None), 0)
+            sales_rows = (
+                [(date, (event.pk, date.pk)) for date in event.upcoming_sales_dates]
+                if event.has_subevents else [(event, (event.pk, None))]
+            )
+            for row, key in sales_rows:
+                row.paid_ticket_count, row.paid_ticket_amount = totals.get(key, (0, Decimal('0.00')))
+                row.ticket_capacity = capacities.get(key)
+            if nexum_sales_layout and not event.has_subevents:
+                for receiver, adjustment in organizer_ticket_sales_adjustment.send(sender=event, request=self.request):
+                    if adjustment is not None:
+                        event.paid_ticket_count += adjustment['count']
+                        event.paid_ticket_amount += adjustment['amount']
+                        if event.ticket_capacity is not None:
+                            event.ticket_capacity += adjustment['reserved_capacity']
         return True
 
     def get_context_data(self, **kwargs):
@@ -280,7 +296,8 @@ class OrganizerDetail(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin
             self.filter_form['meta_{}'.format(p.name)] for p in
             self.organizer.meta_properties.filter(filter_allowed=True)
         ]
-        ctx['show_ticket_sales'] = self.add_ticket_sales(ctx['events'])
+        ctx['nexum_sales_layout'] = self.organizer.slug == 'nexum-productions'
+        ctx['show_ticket_sales'] = self.add_ticket_sales(ctx['events'], ctx['nexum_sales_layout'])
         return ctx
 
 
