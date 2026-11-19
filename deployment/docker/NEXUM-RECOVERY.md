@@ -35,3 +35,11 @@ The fastest restore is the recorded successful image by digest. Use Railway's ro
 - Active image: `docker.io/maroszitny/nexum-pretix-summary@sha256:1e6ef0c0630f743fa029cc081a0c40ef811aa52cfa1115267535cea3125604f0`. The release preserved all layers of the previous image and updated the organizer view, template and Slovak translation. It did not require a database migration.
 - Previous verified image: `docker.io/maroszitny/nexum-pretix-summary@sha256:147712107fb102562ab3ec57d2830f9ab518476de9586628c364d6cd45574f85`.
 - Tests: 32 source integration tests, a complete Linux/amd64 rebuild from the tracked Dockerfile, and an isolated HTTP smoke test on the exact release image with PostgreSQL and Redis. Production verification covered the organizer table, the Latino dashboard and date history, the joint New Year sales panel, and the public shops.
+
+## Capacity and value update on 2026-11-19
+
+- Source: `a19af1932d80e5698ffdec0e058eb5138c333610`.
+- Active image: `docker.io/maroszitny/nexum-pretix-summary@sha256:bc26a0304802ea19a4368a537ef6416bfa8cf278fca3eedb7b9847de185727a0`.
+- Previous image for rollback: `docker.io/maroszitny/nexum-pretix-summary@sha256:1e6ef0c0630f743fa029cc081a0c40ef811aa52cfa1115267535cea3125604f0`.
+- The image updates the organizer view, template, Slovak catalog, capacity helper, core plugin signal and the installed New Year plugin's policy and handlers. No database migration is required.
+- Verified with 35 source integration tests and isolated HTTP checks with PostgreSQL and Redis. The live organizer result matched the existing New Year combined report, including its historical sales.
